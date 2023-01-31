@@ -1,5 +1,7 @@
 /*	
 Copyright (C) 2013-2015 Phil Eaton
+Contributors:
+	The Geek on Skates (https://www.geekonskates.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,15 +26,15 @@ if (!String.prototype.trim) {
 /*
  * CONSTANTS
  */
-var FORTH_TEXT = "\033[1;31mJSForth Interpreter v0.2\033[0m\r\nType \033[1;33mhelp\033[0m to see some docs.",
+var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to see some docs.",
 	FORTH_PROMPT = "\r\n>>> ",
 	FORTH_EOF = "bye",
-	FORTH_DEFAULT_ALLOCATION = 1000,
-	FORTH_ALLOCATION = 1000,
+	FORTH_DEFAULT_ALLOCATION = 2000,
+	FORTH_ALLOCATION = 2000,
 	FORTH_FALSE = 0,
 	FORTH_TRUE = -1,
 	FORTH_DEBUG = false,
-	FORTH_HELP = "\For more documentation on the FORTH language, visit http://www.complang.tuwien.ac.at/forth/gforth/Docs-html/ \
+	FORTH_HELP = "For more documentation on the FORTH language, visit http://www.complang.tuwien.ac.at/forth/gforth/Docs-html/ \
  \r\nFor a concise tutorial/introduction to FORTH, visit \033[1;34mhttp://www.ece.cmu.edu/~koopman/forth/hopl.html\033[0m \
  \r\nwww.forth.com is also a great resource. \
  \r\nPlease feel free to submit any bugs/comments/suggestions to me<at>eatonphil<dot>com \
@@ -43,7 +45,7 @@ var FORTH_TEXT = "\033[1;31mJSForth Interpreter v0.2\033[0m\r\nType \033[1;33mhe
  \r\n    ex: a b . // displays: b; Stack: a \
  \r\n\033[1;34m.s\033[0m - displays the current Stack and the size \
  \r\n    ex: a b .s // displays: a b <2>; Stack: a b \
- \r\n\033[1;34m.c\033[0m - displays the top of the Stack as a character \
+ \r\n\033[1;34memit\033[0m - displays the top of the Stack as a character \
  \r\n    ex: 0 97 .c // displays: a <ok>; Stack: 0 97 \
  \r\n\033[1;34mdrop\033[0m - pops off the top element without returning it \
  \r\n    ex: a b drop // displays: nothing; Stack: a \
@@ -55,24 +57,24 @@ var FORTH_TEXT = "\033[1;31mJSForth Interpreter v0.2\033[0m\r\nType \033[1;33mhe
  \r\n    ex: a b c -rot // displays: nothing; Stack: c a b \
  \r\n\033[1;34mswap\033[0m - swaps the top two elements \
  \r\n    ex: a b // displays: nothing; Stack: b a \
- \r\n033[1;34mover033[0m - copies the second-to-last element to the top of the Stack \
+ \r\n\033[1;34mover\033[0m - copies the second-to-last element to the top of the Stack \
  \r\n    ex: a b over // displays: nothing; Stack: a b a \
- \r\n033[1;34mdup033[0m - copies the top element \
+ \r\n\033[1;34mdup\033[0m - copies the top element \
  \r\n    ex: a b dup // displays: nothing; Stack: a b b \
- \r\n033[1;34mif033[0m ... then - executes what follows \"if\" if it evaluates true, continues on normally after optional \"then\" \
+ \r\n\033[1;34mif\033[0m ... then - executes what follows \"if\" if it evaluates true, continues on normally after optional \"then\" \
  \r\n    ex: a b > if c then d // displays: nothing; Stack: a b c d //if a > b; Stack: a b d //if a <= b \
- \r\n033[1;34mdo033[0m ... [loop] - executes what is between \"do\" and \"loop\" or the end of the line \
+ \r\n\033[1;34mdo033[0m ... [loop] - executes what is between \"do\" and \"loop\" or the end of the line \
  \r\n    ex: a b c do a + // displays: nothing; Stack: adds a to itself b times starting at c\
- \r\n033[1;34minvert033[0m - negates the top element of the Stack \
+ \r\n\033[1;34minvert\033[0m - negates the top element of the Stack \
  \r\n    ex: a invert // displays: nothing; Stack: 0 //a != 0; Stack: 1 //a == 0 \
- \r\n033[1;34mclear033[0m - empties the Stack \
+ \r\n\033[1;34mclear\033[0m - empties the Stack \
  \r\n    ex: a b clear // displays: nothing; Stack: \
- \r\n033[1;34m:033[0m - creates a new custom (potentially recursive) definition \
+ \r\n\033[1;34m:\033[0m - creates a new custom (potentially recursive) definition \
  \r\n    ex: a b c : add2 + + ; add2 // displays: nothing; Stack: (a+b+c) \
- \r\n033[1;34mallocate033[0m - reallocates the max recursion for a single line of input \
+ \r\n\033[1;34mallot\033[0m - reallocates the max recursion for a single line of input \
  \r\n    ex: 10 allocate \
- \r\n033[1;34mcls033[0m - clears the screen \
- \r\n\033[1;34mdebug033[0m - toggles console debug mode\r\n\n",
+ \r\n\033[1;34mcls\033[0m - clears the screen \
+ \r\n\033[1;34mdebug\033[0m - toggles console debug mode\r\n\n",
 
 	// Ignore potential Stack underflow errors if an operator is within a definition.
 	IN_DEFINITION = false,
@@ -90,16 +92,16 @@ var FORTH_TEXT = "\033[1;31mJSForth Interpreter v0.2\033[0m\r\nType \033[1;33mhe
 	IF_EXPECTED_THEN = -6,
 
 	// MESSAGES
-	FORTH_ERROR_GENERIC = "Forth Error.",
-	FORTH_ERROR_MESSAGE = "",
+	FORTH_ERROR_GENERIC = "Forth Error.",	// Constant, basically a "something goofed but idk what" error (default/fallback)
+	FORTH_ERROR_MESSAGE = "",				// Changes depending on what went wrong and where (more useful)
 
 	// MISC.
-	main,
-	terminal,
+	terminal,			// The terminal (lol obviously); now it's an xterm.js Terminal object
 	user_def = {},
-	main = [],
+	main = [],			// Data stack
 	RECUR_COUNT = 0,
-	printBuffer = [];
+	printBuffer = [],	// Stores terminal output
+	line = "";			// Stores terminal input
 
 function valid_def_name(name) {
 	var chr = name.charAt(0);
@@ -136,13 +138,16 @@ function interpret(input) {
 				} else if (token == "debug") {
 					FORTH_DEBUG = (FORTH_DEBUG?false:true);
 					return "console debugging enabled: "+FORTH_DEBUG;
-				} else if (token == "allocate") {
+				} else if (token == "allot") {
 					FORTH_ALLOCATION = Number(main.pop());
 					return "Stack max reallocated: "+FORTH_ALLOCATION;
-				} else if (token == ".s") {
-					printBuffer.push(main.join(" "));
+				} else if (token == "depth") {
+					main.push(main.length);
                     continue;
-				} else if (token == ".c") {
+				} else if (token == ".s") {
+                    printBuffer.push(" <" + main.length + "> " + main.join(" "));
+                    continue;
+				} else if (token == "emit") {
                     printBuffer.push(String.fromCharCode(main[main.length-1]));
                     continue;
                 }
@@ -383,71 +388,41 @@ function displayPrompt(m) {
 	terminal.focus();
 }
 
-/*
-function onData(char) {
-		if (char == "\r") {
-			var input = terminal.value.split("\n");
-			var last_line = input[input.length - 1].slice(FORTH_PROMPT.length-1);
-			RECUR_COUNT = 0;
-			var result = interpret(last_line);
-            if (printBuffer.length) printBuffer.push(" ");
-			if (FORTH_ERROR == "") {
-				if (result) result += " ";
-				else result = "";
-				if (terminal.value !== "")	// What to do with terminal.value?
-					displayPrompt("\r\n    " + printBuffer.join("") + result + FORTH_OK);
-				else {
-					terminal.write("\033[2J\033[H");	// clear screen
-					displayPrompt();
-				}
-			} else {
-				displayPrompt("\n<err:" + FORTH_ERROR + ";msg:" + (FORTH_ERROR_MESSAGE || FORTH_ERROR_GENERIC) + ">");
-				FORTH_ERROR = "";
-				FORTH_ERROR_MESSAGE = "";
-			}
-		} else if (char == 8 || char == 46) {
-			if (get_line().length < FORTH_PROMPT.length) {
-				terminal.value += " ";
+function onInput(char) {
+	var code = char.charCodeAt(0);
+	if (char == "\r") {
+		RECUR_COUNT = 0;
+		var result = interpret(line);
+		if (printBuffer.length) printBuffer.push(" ");
+		if (FORTH_ERROR == "") {
+			if (result) result += " ";
+			else result = "";
+			displayPrompt(printBuffer.join("") + result + FORTH_OK + "\r\n");
 		}
+		else displayPrompt("\033[1;31m" + (FORTH_ERROR_MESSAGE || FORTH_ERROR_GENERIC) + result + "\033[0m\r\n");
+		line = "";
+		printBuffer = [];
+	} else if (code == 8 || code == 127) {
+		if (line !== "") {
+			line = line.substr(line.length - 2);
+			terminal.write("\033[D \033[D");
+		}
+	} else {
+		terminal.write(char);
+		line += char;
 	}
-	printBuffer = [];
 }
-*/
 
 /**
  * Initial setup
  */
 window.onload = function() {
-	// Set up the terminal
 	terminal = new Terminal({
 		screenReaderMode: true,
 		customGlyphs: true
 	});
 	terminal.open(document.getElementById('repl'));
-	var line = "";
-	terminal.onData(function(char) {
-		if (char == "\r") {
-			RECUR_COUNT = 0;
-			var result = interpret(line);
-			if (FORTH_ERROR == "") {
-				if (result) result += " ";
-				else result = "";
-				displayPrompt("\r\n    " + printBuffer.join("") + result + FORTH_OK);
-				/*
-				if (terminal.value !== "")	// What to do with terminal.value?
-					displayPrompt("\r\n    " + printBuffer.join("") + result + FORTH_OK);
-				else {
-					terminal.write("\033[2J\033[H");	// clear screen
-					displayPrompt();
-				}
-				*/
-			}
-			line = "";
-		} else {
-			terminal.write(char);
-			line += char;
-		}
-	});
+	terminal.onData(onInput);
 	terminal.write(FORTH_TEXT);
 	displayPrompt();
 };
