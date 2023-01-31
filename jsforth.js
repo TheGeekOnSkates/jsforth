@@ -1,7 +1,7 @@
 /*	
-Copyright (C) 2013-2015 Phil Eaton
 Contributors:
-	The Geek on Skates (https://www.geekonskates.com)
+	2013-2015 Phil Eaton
+	2023 The Geek on Skates (https://www.geekonskates.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -47,6 +47,7 @@ var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to se
 	STACK_OVERFLOW = -4,
 	BAD_DEF_NAME = -5,
 	IF_EXPECTED_THEN = -6,
+	DIVISION_BY_ZERO = -7,
 
 	// MESSAGES
 	FORTH_ERROR_GENERIC = "Forth Error.",	// Constant, basically a "something goofed but idk what" error (default/fallback)
@@ -83,6 +84,14 @@ function interpret(input) {
 		token = tokens[i];
 		if (FORTH_DEBUG) console.log("current_token: "+token);
 		if (token == "\\") return;
+		if (token == "(") {
+			while(!token.endsWith(")")) {
+				i++;
+				token = tokens[i];
+				if (FORTH_DEBUG) console.log("skipping "+token);
+			}
+			continue;
+		}
 		if (!isNaN(parseFloat(token)) && isFinite(token)) {
 			main.push(token);
 		} else {
@@ -172,9 +181,14 @@ function interpret(input) {
 						second = Number(main.pop());
 						main.push(second * first);
 					} else if (token == "/") {
-						first = Number(main.pop());
-						second = Number(main.pop());
-						main.push(second / first);
+						first = parseInt(main.pop());
+						second = parseInt(main.pop());
+						if (first == 0) {
+							FORTH_ERROR = DIVISION_BY_ZERO;
+							FORTH_ERROR_MESSAGE = "Division by zero";
+							return;
+						}
+						main.push(Math.floor(second / first));
 					} else if (token == "mod") {
 						first = Number(main.pop());
 						second = Number(main.pop());
@@ -250,14 +264,12 @@ function interpret(input) {
 						first = Number(main.pop());
 						main.push((first>=second)?Number(FORTH_TRUE):FORTH_FALSE);
 					}
-					else if (token == "<=")
-					{
+					else if (token == "<=") {
 						second = Number(main.pop());
 						first = Number(main.pop());
 						main.push((first<=second)?Number(FORTH_TRUE):FORTH_FALSE);
 					}
-					else if (token == "=")
-					{
+					else if (token == "=") {
 						second = Number(main.pop());
 						first = Number(main.pop());
 						main.push((first==second)?Number(FORTH_TRUE):FORTH_FALSE);
@@ -360,15 +372,16 @@ function onInput(char) {
 			if (result) result += " ";
 			else result = "";
 			if (result === "" && !printBuffer.length)
-				displayPrompt(FORTH_OK + "\r\n");
-			else displayPrompt(" " + printBuffer.join("") + result + FORTH_OK + "\r\n");
+				displayPrompt(FORTH_OK);
+			else displayPrompt(" " + printBuffer.join("") + result + FORTH_OK);
 		}
-		else displayPrompt("\033[1;31m" + (FORTH_ERROR_MESSAGE || FORTH_ERROR_GENERIC) + result + "\033[0m\r\n");
+		else displayPrompt("\033[1;31m " + (FORTH_ERROR_MESSAGE || FORTH_ERROR_GENERIC) + "\033[0m\r\n");
 		line = "";
 		printBuffer = [];
+		FORTH_ERROR = "";
 	} else if (code == 8 || code == 127) {
 		if (line !== "") {
-			line = line.substr(line.length - 2);
+			line = line.substr(0, line.length - 2);
 			terminal.write("\033[D \033[D");
 		}
 	} else {
@@ -393,6 +406,7 @@ window.onload = function() {
 
 	// Add some more standard Forth words - written in Forth :)
 	interpret(": 2dup over over ;");
+	interpret(": /mod 2dup mod -rot / ;");
 	interpret(": 2drop drop drop ;");
 	//interpret(": 2swap 3 roll 3 roll ;");		// He didn't define roll - TO-DO
 };
