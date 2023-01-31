@@ -32,47 +32,6 @@ var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to se
 	FORTH_FALSE = 0,
 	FORTH_TRUE = -1,
 	FORTH_DEBUG = false,
-	FORTH_HELP = "For more documentation on the FORTH language, visit http://www.complang.tuwien.ac.at/forth/gforth/Docs-html/ \
- \r\nFor a concise tutorial/introduction to FORTH, visit \033[1;34mhttp://www.ece.cmu.edu/~koopman/forth/hopl.html\033[0m \
- \r\nwww.forth.com is also a great resource. \
- \r\nPlease feel free to submit any bugs/comments/suggestions to me<at>eatonphil<dot>com \
- \r\n\nSupported Commands: \
- \r\n\033[1;34m+ - / * ^ < > <= >= = !=\033[0m \
- \r\n    ex: a b + // displays: Stack: (a+b) \
- \r\n\033[1;34m.\033[0m - returns the top element of the Stack \
- \r\n    ex: a b . // displays: b; Stack: a \
- \r\n\033[1;34m.s\033[0m - displays the current Stack and the size \
- \r\n    ex: a b .s // displays: a b <2>; Stack: a b \
- \r\n\033[1;34memit\033[0m - displays the top of the Stack as a character \
- \r\n    ex: 0 97 .c // displays: a <ok>; Stack: 0 97 \
- \r\n\033[1;34mdrop\033[0m - pops off the top element without returning it \
- \r\n    ex: a b drop // displays: nothing; Stack: a \
- \r\n\033[1;34mpick\033[0m - puts a copy of the nth element on the top of the Stack \
- \r\n    ex: a b c 2 pick // displays: nothing; Stack: a b c a \
- \r\n\033[1;34mrot\033[0m - rotates the Stack clockwise \
- \r\n    ex: a b c rot // displays: nothing; Stack: b c a \
- \r\n\033[1;34m-rot\033[0m - rotates the Stack counter-clockwise \
- \r\n    ex: a b c -rot // displays: nothing; Stack: c a b \
- \r\n\033[1;34mswap\033[0m - swaps the top two elements \
- \r\n    ex: a b // displays: nothing; Stack: b a \
- \r\n\033[1;34mover\033[0m - copies the second-to-last element to the top of the Stack \
- \r\n    ex: a b over // displays: nothing; Stack: a b a \
- \r\n\033[1;34mdup\033[0m - copies the top element \
- \r\n    ex: a b dup // displays: nothing; Stack: a b b \
- \r\n\033[1;34mif\033[0m ... then - executes what follows \"if\" if it evaluates true, continues on normally after optional \"then\" \
- \r\n    ex: a b > if c then d // displays: nothing; Stack: a b c d //if a > b; Stack: a b d //if a <= b \
- \r\n\033[1;34mdo033[0m ... [loop] - executes what is between \"do\" and \"loop\" or the end of the line \
- \r\n    ex: a b c do a + // displays: nothing; Stack: adds a to itself b times starting at c\
- \r\n\033[1;34minvert\033[0m - negates the top element of the Stack \
- \r\n    ex: a invert // displays: nothing; Stack: 0 //a != 0; Stack: 1 //a == 0 \
- \r\n\033[1;34mclear\033[0m - empties the Stack \
- \r\n    ex: a b clear // displays: nothing; Stack: \
- \r\n\033[1;34m:\033[0m - creates a new custom (potentially recursive) definition \
- \r\n    ex: a b c : add2 + + ; add2 // displays: nothing; Stack: (a+b+c) \
- \r\n\033[1;34mallocate\033[0m - reallocates the max recursion for a single line of input \
- \r\n    ex: 10 allocate \
- \r\n\033[1;34mcls\033[0m - clears the screen \
- \r\n\033[1;34mdebug\033[0m - toggles console debug mode\r\n\n",
 
 	// Ignore potential Stack underflow errors if an operator is within a definition.
 	IN_DEFINITION = false,
@@ -132,7 +91,7 @@ function interpret(input) {
 				terminal.write("\033[2J\033[H");
 				return;
 			} else if (token == "help") {
-				terminal.write(FORTH_HELP);
+				window.open("manual.html");
 				return;
 			} else if (token == "debug") {
 				FORTH_DEBUG = (FORTH_DEBUG?false:true);
@@ -302,13 +261,11 @@ function interpret(input) {
 						second = Number(main.pop());
 						first = Number(main.pop());
 						main.push((first==second)?Number(FORTH_TRUE):FORTH_FALSE);
-					} else if (token == "!=")
-					{
+					} else if (token == "<>") {
 						second = Number(main.pop());
 						first = Number(main.pop());
 						main.push((first!=second)?Number(FORTH_TRUE):FORTH_FALSE);
-					} else if (token == "do")
-					{
+					} else if (token == "do") {
 						var rest = Array();
 						var func_def = Array();
 						var index = main.pop();
@@ -323,16 +280,13 @@ function interpret(input) {
 							interpret(func_def.join(" "));
 						if (rest.length)
 							interpret(rest.join(" "));
+					} else if (token == "rot") {
+						var a = main.pop(), b = main.pop(), c = main.pop();
+						main.push(b); main.push(a); main.push(c);
+					} else if (token == "-rot") {
+						var a = main.pop(), b = main.pop(), c = main.pop();
+						main.push(a); main.push(c); main.push(b);
 					}
-                       else if (token == "rot")
-                       {
-                           var last = main.shift();
-                           main.push(last);
-                       }
-                       else if (token == "-rot") {
-                           var first = main.pop();
-                           main.unshift(first);
-                       }
 				}
 			// These functions have no requirements or are not found.
 			} else {
@@ -405,7 +359,9 @@ function onInput(char) {
 		if (FORTH_ERROR == "") {
 			if (result) result += " ";
 			else result = "";
-			displayPrompt(printBuffer.join("") + result + FORTH_OK + "\r\n");
+			if (result === "" && !printBuffer.length)
+				displayPrompt(FORTH_OK + "\r\n");
+			else displayPrompt(" " + printBuffer.join("") + result + FORTH_OK + "\r\n");
 		}
 		else displayPrompt("\033[1;31m" + (FORTH_ERROR_MESSAGE || FORTH_ERROR_GENERIC) + result + "\033[0m\r\n");
 		line = "";

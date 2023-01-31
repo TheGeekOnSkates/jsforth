@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>JSForth User's Manual</title>
+</head>
+<body>
+	<nav>
+		<h1>Contents</h1>
+		<ol>
+			<li><a href="#intro">Overview</a></li>
+			<li>
+				<a href="#words">Supported words</a>
+				<ul>
+					<li><a href="#plus">+</a></li>
+				</ul>
+				<!-- TO BE DOCUMENTED
+				+ - / * ^ < > <= >= = != 
+				lshift rshift and or xor
+				. .s emit
+				dup swap rot pick roll drop over
+				if ... then do ... loop : ;
+				invert negate clear cls allocate debug
+
+				See https://forth-standard.org/standard/core
+				for words to be added :)
+				-->
+			</li>
+		</ol>
+	</nav>
+	<main>
+		<h1 id="intro">Overview</h1>
+		<p>
+			This is a Forth implementation in Javascript, with a REPL using <a href="https://xtermjs.org/" target="_blank">xterm.js</a>.
+			It started out as a student's college assignment, but it has the potential to be something much cooler and more useful.
+			For more info on Forth, see <a href=https://www.forth.com/starting-forth/">Starting FORTH</a>.  It's a simple stack-based
+			language, low-level in some ways and yet high-level in others.  The best (or at least funniest) description I ever read is
+			in <a href="https://hackaday.com/2017/01/27/forth-the-hackers-language/" target="_blank">this article</a>: "Forth is what
+			you’d get if Python slept with Assembly Language: interactive, expressive, and without syntactical baggage, but still very
+			close to the metal. Is it a high-level language or a low-level language? Yes! Or rather, it’s the shortest path from one to
+			the other."  Who wouldn't want that in a brwoser? 🤣
+		</p>
+		<h1 id="words">Supported words</h1>
+		<h2 id="plus">+</h2>
+		<p>Pops the top two numbers off the stack, adds them, and pushes the result onto the stack.  For example:</p>
+		<code>3 4 +</code>
+		<p>Displays: Nothing; Stack: 7</p>
+	</main>
+</body>
+</html>

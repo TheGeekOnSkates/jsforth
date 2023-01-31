@@ -6,6 +6,6 @@ In no particular order...
 * Add more Forth words in Forth (like I did for `2DUP`)
 * Figure out how his memory system works and add `s"`
 * Figure out how his variables work - `ALLOT` is not the same as his "allocate" (it was more like a C malloc, to increase the number of max recursion).  Add `ALLOT`
-* Add `."`, `(`, and `\`
+* Add `."` and `(`
 * Update the docs (both in the README and in the `HELP` word)
 * Push to BitBucket, submit a PR and see if he goes for it.  Either way, keep on coding! :)

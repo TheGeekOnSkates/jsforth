@@ -1,8 +1,6 @@
 # JSForth
 
-This is a micro-Forth implementation in Javascript, with a REPL using [xterm.js](https://xtermjs.org/).
-
-This started out as a student's college assignment; it only took a few hours to throw together, so it's still very much a "work in progress". That said, it is pretty darn cool!
+This is a micro-Forth implementation in Javascript, with a REPL using [xterm.js](https://xtermjs.org/).  It started out as a student's college assignment; it only took a few hours to throw together, so it's still very much a "work in progress". That said, it is pretty darn cool!
 
 # Try It Out
 
