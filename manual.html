@@ -15,6 +15,7 @@
 					<li><a href="#minus">-</a></li>
 					<li><a href="#times">*</a></li>
 					<li><a href="#slash">/</a></li>
+					<li><a href="#mod">mod</a></li>
 				</ul>
 				<!-- TO BE DOCUMENTED
 				^ < > <= >= = != 
@@ -64,6 +65,15 @@
 		<p>For example:</p>
 		<code>10 2 /</code>
 		<p>Displays: Nothing; Stack: 5</p>
+		<h2 id="mod">mod</h2>
+		<p>Pops the top two numbers off the stack, divides the second by the first, and pushes the remainder (die-hard Roman math lovers call this "Modulus" and/or "Modulo" - sorry, I don't have any Roman buddies to confirm the exact usage, so I'm calling it "remainder") onto the stack.  Note that just like with <code>/</code>:</p>
+		<ul>
+			<li>This is whole-number ("integer") division; there are no decimal places in the result.</li>
+			<li>Trying to divide by zero will show an error.</li>
+		</ul>
+		<p>For example:</p>
+		<code>10 3 mod</code>
+		<p>Displays: Nothing; Stack: 1</p>
 	</main>
 </body>
 </html>

@@ -192,6 +192,11 @@ function interpret(input) {
 					} else if (token == "mod") {
 						first = Number(main.pop());
 						second = Number(main.pop());
+						if (first == 0) {
+							FORTH_ERROR = DIVISION_BY_ZERO;
+							FORTH_ERROR_MESSAGE = "<def:" + token + ";line:"+input+";pos:"+i+"> division by zero";
+							return;
+						}
 						main.push(second % first);
 					} else if (token == "lshift") {
 						first = Number(main.pop());
@@ -423,4 +428,6 @@ window.onload = function() {
 	interpret(": /mod 2dup mod -rot / ;");
 	interpret(": 2drop drop drop ;");
 	interpret(": 2swap 3 roll 3 roll ;");
+	interpret(": 2over 3 pick 3 pick ;");
+	interpret(": */ -rot * swap / ;");
 };
