@@ -24,86 +24,84 @@ if (!String.prototype.trim) {
 /*
  * CONSTANTS
  */
- var FORTH_TEXT = "JSForth Interpreter v0.1  Copyright (C) 2013-2015  Phil Eaton \
- \nType \"help\" to see some documentation.";
+var FORTH_TEXT = "\033[1;31mJSForth Interpreter v0.2\033[0m\r\nType \033[1;33mhelp\033[0m to see some docs.",
+	FORTH_PROMPT = "\r\n>>> ",
+	FORTH_EOF = "bye",
+	FORTH_DEFAULT_ALLOCATION = 1000,
+	FORTH_ALLOCATION = 1000,
+	FORTH_FALSE = 0,
+	FORTH_TRUE = -1,
+	FORTH_DEBUG = false,
+	FORTH_HELP = "\For more documentation on the FORTH language, visit http://www.complang.tuwien.ac.at/forth/gforth/Docs-html/ \
+ \r\nFor a concise tutorial/introduction to FORTH, visit \033[1;34mhttp://www.ece.cmu.edu/~koopman/forth/hopl.html\033[0m \
+ \r\nwww.forth.com is also a great resource. \
+ \r\nPlease feel free to submit any bugs/comments/suggestions to me<at>eatonphil<dot>com \
+ \r\n\nSupported Commands: \
+ \r\n\033[1;34m+ - / * ^ < > <= >= = !=\033[0m \
+ \r\n    ex: a b + // displays: Stack: (a+b) \
+ \r\n\033[1;34m.\033[0m - returns the top element of the Stack \
+ \r\n    ex: a b . // displays: b; Stack: a \
+ \r\n\033[1;34m.s\033[0m - displays the current Stack and the size \
+ \r\n    ex: a b .s // displays: a b <2>; Stack: a b \
+ \r\n\033[1;34m.c\033[0m - displays the top of the Stack as a character \
+ \r\n    ex: 0 97 .c // displays: a <ok>; Stack: 0 97 \
+ \r\n\033[1;34mdrop\033[0m - pops off the top element without returning it \
+ \r\n    ex: a b drop // displays: nothing; Stack: a \
+ \r\n\033[1;34mpick\033[0m - puts a copy of the nth element on the top of the Stack \
+ \r\n    ex: a b c 2 pick // displays: nothing; Stack: a b c a \
+ \r\n\033[1;34mrot\033[0m - rotates the Stack clockwise \
+ \r\n    ex: a b c rot // displays: nothing; Stack: b c a \
+ \r\n\033[1;34m-rot\033[0m - rotates the Stack counter-clockwise \
+ \r\n    ex: a b c -rot // displays: nothing; Stack: c a b \
+ \r\n\033[1;34mswap\033[0m - swaps the top two elements \
+ \r\n    ex: a b // displays: nothing; Stack: b a \
+ \r\n033[1;34mover033[0m - copies the second-to-last element to the top of the Stack \
+ \r\n    ex: a b over // displays: nothing; Stack: a b a \
+ \r\n033[1;34mdup033[0m - copies the top element \
+ \r\n    ex: a b dup // displays: nothing; Stack: a b b \
+ \r\n033[1;34mif033[0m ... then - executes what follows \"if\" if it evaluates true, continues on normally after optional \"then\" \
+ \r\n    ex: a b > if c then d // displays: nothing; Stack: a b c d //if a > b; Stack: a b d //if a <= b \
+ \r\n033[1;34mdo033[0m ... [loop] - executes what is between \"do\" and \"loop\" or the end of the line \
+ \r\n    ex: a b c do a + // displays: nothing; Stack: adds a to itself b times starting at c\
+ \r\n033[1;34minvert033[0m - negates the top element of the Stack \
+ \r\n    ex: a invert // displays: nothing; Stack: 0 //a != 0; Stack: 1 //a == 0 \
+ \r\n033[1;34mclear033[0m - empties the Stack \
+ \r\n    ex: a b clear // displays: nothing; Stack: \
+ \r\n033[1;34m:033[0m - creates a new custom (potentially recursive) definition \
+ \r\n    ex: a b c : add2 + + ; add2 // displays: nothing; Stack: (a+b+c) \
+ \r\n033[1;34mallocate033[0m - reallocates the max recursion for a single line of input \
+ \r\n    ex: 10 allocate \
+ \r\n033[1;34mcls033[0m - clears the screen \
+ \r\n\033[1;34mdebug033[0m - toggles console debug mode\r\n\n",
 
- var FORTH_PROMPT = "\n>>> ";
- var FORTH_EOF = "bye";
- var FORTH_DEFAULT_ALLOCATION = 1000;
- var FORTH_ALLOCATION = FORTH_DEFAULT_ALLOCATION;
- var FORTH_FALSE = 0;
- var FORTH_TRUE = !FORTH_FALSE;
- var FORTH_DEBUG = false;
- var FORTH_HELP = "\For more documentation on the FORTH language, visit http://www.complang.tuwien.ac.at/forth/gforth/Docs-html/ \
- \nFor a concise tutorial/introduction to FORTH, visit http://www.ece.cmu.edu/~koopman/forth/hopl.html \
- \nwww.forth.com is also a great resource. \
- \nPlease feel free to submit any bugs/comments/suggestions to me<at>eatonphil<dot>com \
- \n\nSupported Commands: \
- \n+ - / * ^ < > <= >= = != \
- \n    ex: a b + // displays: Stack: (a+b) \
- \n. - returns the top element of the Stack \
- \n    ex: a b . // displays: b; Stack: a \
- \n.s - displays the current Stack and the size \
- \n    ex: a b .s // displays: a b <2>; Stack: a b \
- \n.c - displays the top of the Stack as a character \
- \n    ex: 0 97 .c // displays: a <ok>; Stack: 0 97 \
- \ndrop - pops off the top element without returning it \
- \n    ex: a b drop // displays: nothing; Stack: a \
- \npick - puts a copy of the nth element on the top of the Stack \
- \n    ex: a b c 2 pick // displays: nothing; Stack: a b c a \
- \nrot - rotates the Stack clockwise \
- \n    ex: a b c rot // displays: nothing; Stack: b c a \
- \n-rot - rotates the Stack counter-clockwise \
- \n    ex: a b c -rot // displays: nothing; Stack: c a b \
- \nswap - swaps the top two elements \
- \n    ex: a b // displays: nothing; Stack: b a \
- \nover - copies the second-to-last element to the top of the Stack \
- \n    ex: a b over // displays: nothing; Stack: a b a \
- \ndup - copies the top element \
- \n    ex: a b dup // displays: nothing; Stack: a b b \
- \nif ... then - executes what follows \"if\" if it evaluates true, continues on normally after optional \"then\" \
- \n    ex: a b > if c then d // displays: nothing; Stack: a b c d //if a > b; Stack: a b d //if a <= b \
- \ndo ... [loop] - executes what is between \"do\" and \"loop\" or the end of the line \
- \n    ex: a b c do a + // displays: nothing; Stack: adds a to itself b times starting at c\
- \ninvert - negates the top element of the Stack \
- \n    ex: a invert // displays: nothing; Stack: 0 //a != 0; Stack: 1 //a == 0 \
- \nclear - empties the Stack \
- \n    ex: a b clear // displays: nothing; Stack: \
- \n: - creates a new custom (potentially recursive) definition \
- \n    ex: a b c : add2 + + ; add2 // displays: nothing; Stack: (a+b+c) \
- \nallocate - reallocates the max recursion for a single line of input \
- \n    ex: 10 allocate \
- \ncls - clears the screen \
- \ndebug - toggles console debug mode";
+	// Ignore potential Stack underflow errors if an operator is within a definition.
+	IN_DEFINITION = false,
 
-// Ignore potential Stack underflow errors if an operator is within a definition.
-var IN_DEFINITION = false;
+	// ERRORS
+	FORTH_OK = " ok",
+	FORTH_ERROR = "",
 
-/*
- * ERRORS
- */
+	// CODES
+	CMD_NOT_FOUND = -1,
+	STACK_UNDERFLOW = -2,
+	PICK_OUT_OF_BOUNDS = -3,
+	STACK_OVERFLOW = -4,
+	BAD_DEF_NAME = -5,
+	IF_EXPECTED_THEN = -6,
 
- var FORTH_OK = "<ok>";
- var FORTH_ERROR = "";
+	// MESSAGES
+	FORTH_ERROR_GENERIC = "Forth Error.",
+	FORTH_ERROR_MESSAGE = "",
 
-// CODES
-var CMD_NOT_FOUND = -1;
-var STACK_UNDERFLOW = -2;
-var PICK_OUT_OF_BOUNDS = -3;
-var STACK_OVERFLOW = -4;
-var BAD_DEF_NAME = -5;
-var IF_EXPECTED_THEN = -6;
+	// MISC.
+	main,
+	terminal,
+	user_def = {},
+	main = [],
+	RECUR_COUNT = 0,
+	printBuffer = [];
 
-// MESSAGES
-var FORTH_ERROR_GENERIC = "Forth Error.";
-var FORTH_ERROR_MESSAGE = "";
-
-var main;
-var terminal;
-var user_def = {};
-
-function valid_def_name(name)
-{
+function valid_def_name(name) {
 	var chr = name.charAt(0);
 	if (chr >= 'a' && chr <= 'z')
 		return true;
@@ -111,18 +109,13 @@ function valid_def_name(name)
 }
 
 function interpret(input) {
-	terminal = window.terminal;
 	RECUR_COUNT++;
 	
-	if (RECUR_COUNT == FORTH_ALLOCATION)
-	{
+	if (RECUR_COUNT == FORTH_ALLOCATION) {
 		FORTH_ERROR = STACK_OVERFLOW;
 		FORTH_ERROR_MESSAGE = "Stack Overflow. If this is generated incorrectly, the Stack can be reallocated. Default max recursion for a line of input is "+FORTH_DEFAULT_ALLOCATION+".";
-	}
-	else
-	{
-		if (FORTH_DEBUG)
-		{
+	} else {
+		if (FORTH_DEBUG) {
 			console.log("current_line: "+input);
 		}
 		tokens = input.split(" ");
@@ -135,10 +128,10 @@ function interpret(input) {
 			} else {
 				token = token.toLowerCase();
 				if (token == "cls") {
-					terminal.value = "";
+					terminal.write("\033[2J\033[H");
 					return;
 				} else if (token == "help") {
-					terminal.value = FORTH_HELP;
+					terminal.write(FORTH_HELP);
 					return;
 				} else if (token == "debug") {
 					FORTH_DEBUG = (FORTH_DEBUG?false:true);
@@ -380,79 +373,81 @@ function interpret(input) {
 	}
 }
 
-function displayPrompt(result) {
-	terminal = window.terminal;
-	if (!result)
-		result = "";
-	terminal.value += result + FORTH_PROMPT;
+/**
+ * Displays a message followed by the prompt
+ * @param {string} The message (either "ok" or an error)
+ */
+function displayPrompt(m) {
+	m = m || "";
+	terminal.write(m + FORTH_PROMPT);
 	terminal.focus();
 }
 
-function setKeyPressAction(terminal) {
-	function get_line() {
-		var lines = terminal.value.split("\n");
-		var line = lines[lines.length - 1];
-		return line;
-	}
-
-
-	terminal.onkeydown = function(e) {
-		if (e.keyCode == 13) {
+/*
+function onData(char) {
+		if (char == "\r") {
 			var input = terminal.value.split("\n");
 			var last_line = input[input.length - 1].slice(FORTH_PROMPT.length-1);
 			RECUR_COUNT = 0;
 			var result = interpret(last_line);
             if (printBuffer.length) printBuffer.push(" ");
 			if (FORTH_ERROR == "") {
-				if (result)
-					result += " ";
-				else
-					result = "";
-				if (terminal.value !== "")
-					displayPrompt("\n    " + printBuffer.join("") + result + FORTH_OK);
-				else // clear screen
-					terminal.value = ">>> ";
+				if (result) result += " ";
+				else result = "";
+				if (terminal.value !== "")	// What to do with terminal.value?
+					displayPrompt("\r\n    " + printBuffer.join("") + result + FORTH_OK);
+				else {
+					terminal.write("\033[2J\033[H");	// clear screen
+					displayPrompt();
+				}
 			} else {
 				displayPrompt("\n<err:" + FORTH_ERROR + ";msg:" + (FORTH_ERROR_MESSAGE || FORTH_ERROR_GENERIC) + ">");
 				FORTH_ERROR = "";
 				FORTH_ERROR_MESSAGE = "";
 			}
-			window.setTimeout(function() {
-				val = terminal.value.split("");
-				terminal.value = val.splice(0, val.length - 1).join("");
-			}, 1);
-		} else if (e.keyCode == 8 || e.keyCode == 46) {
+		} else if (char == 8 || char == 46) {
 			if (get_line().length < FORTH_PROMPT.length) {
 				terminal.value += " ";
-			}
 		}
-        printBuffer = [];
-	};
+	}
+	printBuffer = [];
 }
+*/
 
-function init_interpreter() {
-	terminal = window.terminal;
-	/*
-	 * Set interpreter style settings.
-	 */
-	 terminal.setAttribute("style", "width:100%;height:100%;position:absolute;left:0;right:0;top:0;bottom:0;background-color:black;color:red;font-size:20px;font-family:\"Courier New\"");
-	 terminal.setAttribute("resize", "none");
-	 terminal.setAttribute("spellcheck", "false");
-	 terminal.focus();
-	 terminal.value = FORTH_TEXT;
-
-	 displayPrompt();
-
-	 setKeyPressAction(terminal);
-	}
-
-	function init_env() {
-		window.terminal = document.getElementById("interpreter");
-		window.main = [];
-        window.printBuffer = [];
-	}
-
-	window.onload = function() {
-		init_env();
-		init_interpreter();
-	};
+/**
+ * Initial setup
+ */
+window.onload = function() {
+	// Set up the terminal
+	terminal = new Terminal({
+		screenReaderMode: true,
+		customGlyphs: true
+	});
+	terminal.open(document.getElementById('repl'));
+	var line = "";
+	terminal.onData(function(char) {
+		if (char == "\r") {
+			RECUR_COUNT = 0;
+			var result = interpret(line);
+			if (FORTH_ERROR == "") {
+				if (result) result += " ";
+				else result = "";
+				displayPrompt("\r\n    " + printBuffer.join("") + result + FORTH_OK);
+				/*
+				if (terminal.value !== "")	// What to do with terminal.value?
+					displayPrompt("\r\n    " + printBuffer.join("") + result + FORTH_OK);
+				else {
+					terminal.write("\033[2J\033[H");	// clear screen
+					displayPrompt();
+				}
+				*/
+			}
+			line = "";
+		} else {
+			terminal.write(char);
+			line += char;
+		}
+	});
+	terminal.write(FORTH_TEXT);
+	displayPrompt();
+};
