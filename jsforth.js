@@ -112,21 +112,21 @@ function interpret(input) {
 				main.push(main.length);
                    continue;
 			} else if (token == ".s") {
-                   printBuffer.push(" <" + main.length + "> " + main.join(" "));
+                   printBuffer.push("<" + main.length + "> " + main.join(" "));
                    continue;
 			} else if (token == "emit") {
-                   printBuffer.push(String.fromCharCode(main[main.length-1]));
+                   printBuffer.push(String.fromCharCode(main.pop()));
                    continue;
                }
 
-			if (token == "." || token == "if" || token == "invert" || token == "drop" || token == "dup")// if token represents a binary operator
-			{
+			if ([".", "if", "invert", "drop", "dup"].indexOf(token) > -1) {
 				if (main.length < 1 || IN_DEFINITION == true) {
 					FORTH_ERROR = STACK_UNDERFLOW;
 					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
 				} else if (!IN_DEFINITION) {
 					if (token == ".") {
-						return main.pop();
+						printBuffer.push(main.pop() + " ");
+						continue;
 					} else if (token == "if") {
 						var top = (Number(main.pop())==FORTH_FALSE);
 						var then = tokens.indexOf("then");
@@ -163,7 +163,7 @@ function interpret(input) {
 						main.push(first);
 					}
 				}
-			} else if (["+", "-", "*", "^", "/", "mod", "swap", "over", "pick", "=", "<>", ">=", "<=", ">", "<", "do", "rot", "-rot", "lshift", "rshift", "and", "or", "xor"].indexOf(token) > -1) {
+			} else if (["+", "-", "*", "^", "/", "mod", "swap", "over", "pick", "roll", "=", "<>", ">=", "<=", ">", "<", "do", "rot", "-rot", "lshift", "rshift", "and", "or", "xor"].indexOf(token) > -1) {
 				if (main.length < 2) {
 					FORTH_ERROR = STACK_UNDERFLOW;
 					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -185,7 +185,7 @@ function interpret(input) {
 						second = parseInt(main.pop());
 						if (first == 0) {
 							FORTH_ERROR = DIVISION_BY_ZERO;
-							FORTH_ERROR_MESSAGE = "Division by zero";
+							FORTH_ERROR_MESSAGE = "<def:" + token + ";line:"+input+";pos:"+i+"> division by zero";
 							return;
 						}
 						main.push(Math.floor(second / first));
@@ -218,10 +218,10 @@ function interpret(input) {
 						second = Number(main.pop());
 						main.push(pow(second, first));
 					} else if (token == "swap") {
-						first = main.pop();
-						second = main.pop();
-						main.push(first);
-						main.push(second);
+						a = main.pop();
+						b = main.pop();
+						main.push(a);
+						main.push(b);
 					} else if (token == "over") {
 						first = main.pop();
 						second = main.pop();
@@ -229,7 +229,7 @@ function interpret(input) {
 						main.push(first);
 						main.push(second);
 					} else if (token == "pick") {
-						n = Number(main.pop());
+						n = parseInt(main.pop());
 						if (n < main.length && n >= 1) {
 							var popped = Array();
 							for (var j = 0; j < n; j++) {
@@ -245,15 +245,27 @@ function interpret(input) {
 							FORTH_ERROR = PICK_OUT_OF_BOUNDS;
 							FORTH_ERROR_MESSAGE = "Pick out of bounds.";
 						}
-					}
-					else if (token == "<")
-					{
+					} else if (token == "roll") {
+						n = parseInt(main.pop());
+						if (n < main.length && n >= 1) {
+							var popped = Array();
+							for (var j = 0; j < n; j++) {
+								popped.push(main.pop());
+							}
+							var picked = Number(main.pop());
+							for (var j = 0; j < n; j++) {
+								main.push(popped.pop());
+							}
+							main.push(picked);
+						} else {
+							FORTH_ERROR = PICK_OUT_OF_BOUNDS;
+							FORTH_ERROR_MESSAGE = "Roll out of bounds.";
+						}
+					} else if (token == "<") {
 						second = Number(main.pop());
 						first = Number(main.pop());
 						main.push((first<second)?Number(FORTH_TRUE):FORTH_FALSE);
-					}
-					else if (token == ">")
-					{
+					} else if (token == ">") {
 						second = Number(main.pop());
 						first = Number(main.pop());
 						console.log(first, second, first > second, Number(FORTH_TRUE), "f");
@@ -321,7 +333,7 @@ function interpret(input) {
 					if (rest.length)
 						interpret(rest.join(" "));
 					if (existed)
-						return "<def:" + func + "> modified";
+						return "<def:" + func + "> redefined";
 					return "<def:" + func + "> created";
 				}
 				else if ((token in window.user_def) && !IN_DEFINITION) // !IN_DEFINITION allows recursion
@@ -405,8 +417,10 @@ window.onload = function() {
 	displayPrompt();
 
 	// Add some more standard Forth words - written in Forth :)
+	interpret(": cr 10 emit 13 emit ;");
+	interpret(": space 32 emit ;");
 	interpret(": 2dup over over ;");
 	interpret(": /mod 2dup mod -rot / ;");
 	interpret(": 2drop drop drop ;");
-	//interpret(": 2swap 3 roll 3 roll ;");		// He didn't define roll - TO-DO
+	interpret(": 2swap 3 roll 3 roll ;");
 };
