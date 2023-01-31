@@ -71,7 +71,7 @@ var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to se
  \r\n    ex: a b clear // displays: nothing; Stack: \
  \r\n\033[1;34m:\033[0m - creates a new custom (potentially recursive) definition \
  \r\n    ex: a b c : add2 + + ; add2 // displays: nothing; Stack: (a+b+c) \
- \r\n\033[1;34mallot\033[0m - reallocates the max recursion for a single line of input \
+ \r\n\033[1;34mallocate\033[0m - reallocates the max recursion for a single line of input \
  \r\n    ex: 10 allocate \
  \r\n\033[1;34mcls\033[0m - clears the screen \
  \r\n\033[1;34mdebug\033[0m - toggles console debug mode\r\n\n",
@@ -103,275 +103,261 @@ var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to se
 	printBuffer = [],	// Stores terminal output
 	line = "";			// Stores terminal input
 
-function valid_def_name(name) {
-	var chr = name.charAt(0);
-	if (chr >= 'a' && chr <= 'z')
-		return true;
-	return false;
-}
-
+/**
+ * This is where most of the heavy lifting is done.  It actually interprets the user's code.
+ * @param {string} input The user's code
+ * @returns {?????} Looks like it returns strings and/or numbers, but then again if that's the case than what's printBuffer for?
+ * @todo Make sense of this - completely understand how it all works.  A lot of it is familiar, some is very much not. :D
+ */
 function interpret(input) {
 	RECUR_COUNT++;
 	
 	if (RECUR_COUNT == FORTH_ALLOCATION) {
 		FORTH_ERROR = STACK_OVERFLOW;
 		FORTH_ERROR_MESSAGE = "Stack Overflow. If this is generated incorrectly, the Stack can be reallocated. Default max recursion for a line of input is "+FORTH_DEFAULT_ALLOCATION+".";
-	} else {
-		if (FORTH_DEBUG) {
-			console.log("current_line: "+input);
-		}
-		tokens = input.split(" ");
-		for (var i = 0; i < tokens.length; i++) {
-			token = tokens[i];
-			if (FORTH_DEBUG)
-				console.log("current_token: "+token);
-			if (!isNaN(parseFloat(token)) && isFinite(token)) {
-				main.push(token);
-			} else {
-				token = token.toLowerCase();
-				if (token == "cls") {
-					terminal.write("\033[2J\033[H");
-					return;
-				} else if (token == "help") {
-					terminal.write(FORTH_HELP);
-					return;
-				} else if (token == "debug") {
-					FORTH_DEBUG = (FORTH_DEBUG?false:true);
-					return "console debugging enabled: "+FORTH_DEBUG;
-				} else if (token == "allot") {
-					FORTH_ALLOCATION = Number(main.pop());
-					return "Stack max reallocated: "+FORTH_ALLOCATION;
-				} else if (token == "depth") {
-					main.push(main.length);
-                    continue;
-				} else if (token == ".s") {
-                    printBuffer.push(" <" + main.length + "> " + main.join(" "));
-                    continue;
-				} else if (token == "emit") {
-                    printBuffer.push(String.fromCharCode(main[main.length-1]));
-                    continue;
-                }
+		return;
+	}
+	if (FORTH_DEBUG) {
+		console.log("current_line: "+input);
+	}
+	tokens = input.toLowerCase().split(" ");
+	raw = input.split(" ");
+	for (var i = 0; i < tokens.length; i++) {
+		token = tokens[i];
+		if (FORTH_DEBUG)
+			console.log("current_token: "+token);
+		if (!isNaN(parseFloat(token)) && isFinite(token)) {
+			main.push(token);
+		} else {
+			token = token.toLowerCase();
+			if (token == "cls") {
+				terminal.write("\033[2J\033[H");
+				return;
+			} else if (token == "help") {
+				terminal.write(FORTH_HELP);
+				return;
+			} else if (token == "debug") {
+				FORTH_DEBUG = (FORTH_DEBUG?false:true);
+				return "console debugging enabled: "+FORTH_DEBUG;
+			} else if (token == "allocate") {
+				FORTH_ALLOCATION = Number(main.pop());
+				return "Stack max reallocated: "+FORTH_ALLOCATION;
+			} else if (token == "depth") {
+				main.push(main.length);
+                   continue;
+			} else if (token == ".s") {
+                   printBuffer.push(" <" + main.length + "> " + main.join(" "));
+                   continue;
+			} else if (token == "emit") {
+                   printBuffer.push(String.fromCharCode(main[main.length-1]));
+                   continue;
+               }
 
-				if (token == "." || token == "if" || token == "invert" || token == "drop" || token == "dup")// if token represents a binary operator
-				{
-					if (main.length < 1 || IN_DEFINITION == true) {
-						FORTH_ERROR = STACK_UNDERFLOW;
-						FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
-					} else if (!IN_DEFINITION) {
-						if (token == ".") {
-							return main.pop();
-						} else if (token == "if") {
-							var top = (Number(main.pop())==FORTH_FALSE);
-							var then = tokens.indexOf("then");
-							if (then !== -1) {
-								if (top) {
-									tokens = tokens.slice(then+1);
-									if (tokens.join(" ") == "")
-										return;
-								}
-								else {
-									tokens = tokens.slice(tokens.indexOf("if")+1);
-									then = tokens.indexOf("then");
-									tokens.splice(then, 1);
-								}
-								console.log(tokens);
-								return interpret(tokens.join(" "));
-							} else {
-								FORTH_ERROR = IF_EXPECTED_THEN;
-								FORTH_ERROR_MESSAGE = "Expected \"then\" in input line.";
-								return;
+			if (token == "." || token == "if" || token == "invert" || token == "drop" || token == "dup")// if token represents a binary operator
+			{
+				if (main.length < 1 || IN_DEFINITION == true) {
+					FORTH_ERROR = STACK_UNDERFLOW;
+					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
+				} else if (!IN_DEFINITION) {
+					if (token == ".") {
+						return main.pop();
+					} else if (token == "if") {
+						var top = (Number(main.pop())==FORTH_FALSE);
+						var then = tokens.indexOf("then");
+						if (then !== -1) {
+							if (top) {
+								tokens = tokens.slice(then+1);
+								if (tokens.join(" ") == "")
+									return;
 							}
-						} else if (token == "invert")
-						{
-							top = main.pop();
-							if (top == FORTH_TRUE)
-								top = FORTH_FALSE;
-							else
-								top = 1;
-							main.push(top);
-						} else if (token == "drop")
-						{
-							main.pop();
-						} else if (token == "dup") {
-							first = main.pop();
-							main.push(first);
-							main.push(first);
-						}
-					}
-				} else if (token == "+" || token == "-" || token == "*" || token == "^" || token == "/" || token == "swap" || token == "over" || token == "pick" || token == "=" || token == "!=" || token == ">=" || token == "<=" || token == ">" || token == "<" || token == "do" || token == "rot" || token == "-rot") {
-					if (main.length < 2) {
-						FORTH_ERROR = STACK_UNDERFLOW;
-						FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
-					} else if (!IN_DEFINITION) {
-						if (token == "+") {
-							first = Number(main.pop());
-							second = Number(main.pop());
-							main.push(second + first);
-						} else if (token == "-") {
-							first = Number(main.pop());
-							second = Number(main.pop());
-							main.push(second - first);
-						} else if (token == "*") {
-							first = Number(main.pop());
-							second = Number(main.pop());
-							main.push(second * first);
-						} else if (token == "/") {
-							first = Number(main.pop());
-							second = Number(main.pop());
-							main.push(second / first);
-						} else if (token == "^") {
-							first = Number(main.pop());
-							second = Number(main.pop());
-							main.push(pow(second, first));
-						} else if (token == "swap") {
-							first = main.pop();
-							second = main.pop();
-							main.push(first);
-							main.push(second);
-						} else if (token == "over") {
-							first = main.pop();
-							second = main.pop();
-							main.push(second);
-							main.push(first);
-							main.push(second);
-						} else if (token == "pick") {
-							n = Number(main.pop());
-							if (n < main.length && n >= 1) {
-								var popped = Array();
-								for (var j = 0; j < n; j++) {
-									popped.push(main.pop());
-								}
-								var picked = Number(main.pop());
-								main.push(picked);
-								for (var j = 0; j < n; j++) {
-									main.push(popped.pop());
-								}
-								main.push(picked);
-							} else {
-								FORTH_ERROR = PICK_OUT_OF_BOUNDS;
-								FORTH_ERROR_MESSAGE = "Pick out of bounds.";
+							else {
+								tokens = tokens.slice(tokens.indexOf("if")+1);
+								then = tokens.indexOf("then");
+								tokens.splice(then, 1);
 							}
+							console.log(tokens);
+							return interpret(tokens.join(" "));
+						} else {
+							FORTH_ERROR = IF_EXPECTED_THEN;
+							FORTH_ERROR_MESSAGE = "Expected \"then\" in input line.";
+							return;
 						}
-						else if (token == "<")
-						{
-							second = Number(main.pop());
-							first = Number(main.pop());
-							main.push((first<second)?Number(FORTH_TRUE):FORTH_FALSE);
-						}
-						else if (token == ">")
-						{
-							second = Number(main.pop());
-							first = Number(main.pop());
-							console.log(first, second, first > second, Number(FORTH_TRUE), "f");
-							main.push((first>second)?Number(FORTH_TRUE):FORTH_FALSE);
-						}
-						else if (token == ">=")
-						{
-							second = Number(main.pop());
-							first = Number(main.pop());
-							main.push((first>=second)?Number(FORTH_TRUE):FORTH_FALSE);
-						}
-						else if (token == "<=")
-						{
-							second = Number(main.pop());
-							first = Number(main.pop());
-							main.push((first<=second)?Number(FORTH_TRUE):FORTH_FALSE);
-						}
-						else if (token == "=")
-						{
-							second = Number(main.pop());
-							first = Number(main.pop());
-							main.push((first==second)?Number(FORTH_TRUE):FORTH_FALSE);
-						} else if (token == "!=")
-						{
-							second = Number(main.pop());
-							first = Number(main.pop());
-							main.push((first!=second)?Number(FORTH_TRUE):FORTH_FALSE);
-						} else if (token == "do")
-						{
-							var rest = Array();
-							var func_def = Array();
-							var index = main.pop();
-							var iterations = main.pop();
-							IN_DEFINITION = true;
-							for (i++; i<tokens.length && tokens[i].toLowerCase() != "loop"; i++)
-								func_def.push(tokens[i]);
-							for (i++;i < tokens.length;i++) // gather up remaining tokens
-								rest.push(tokens[i]);
-							IN_DEFINITION = false;
-							for (;index < iterations; index++)
-								interpret(func_def.join(" "));
-							if (rest.length)
-								interpret(rest.join(" "));
-						}
-                        else if (token == "rot")
-                        {
-                            var last = main.shift();
-                            main.push(last);
-                        }
-                        else if (token == "-rot") {
-                            var first = main.pop();
-                            main.unshift(first);
-                        }
+					} else if (token == "invert") {
+						top = main.pop();
+						// Yes, I get that INVERT is supposed to do something like a bitwise-NOT of all bits, BUT...
+						// (a) idk how to do that in JS, and
+						// (b) the previous implementation didn't handle numbers other than true/false (like what happens if you do i.e. 65 invert?)
+						// (c) in practice, the result is always something like this:
+						main.push((top * -1) - 1);
+					} else if (token == "drop") {
+						main.pop();
+					} else if (token == "dup") {
+						first = main.pop();
+						main.push(first);
+						main.push(first);
 					}
-				// These functions have no requirements or are not found.
-				} else {
-					if (token == ":")
-					{
-						i++;
-						if (valid_def_name(tokens[i])) // if func_name is not a valid function name
-						{
-							var existed = false;
-							var rest = Array();
-							var func = tokens[i].toLowerCase();					
-							var func_def = Array();
-							IN_DEFINITION = true;
-							for (i++;i<tokens.length && tokens[i] != ";"; i++)
-								func_def.push(tokens[i]);
-							for (i++;i < tokens.length;i++) // gather up remaining tokens
-								rest.push(tokens[i]);
-							IN_DEFINITION = false;
-							if (func in window.user_def)
-								existed = true;
-							window.user_def[func] = func_def.join(" ").trim();
-							if (rest.length)
-								interpret(rest.join(" "));
-							if (existed)
-								return "<def:" + func + "> modified";
-							return "<def:" + func + "> created";
+				}
+			} else if (token == "+" || token == "-" || token == "*" || token == "^" || token == "/" || token == "swap" || token == "over" || token == "pick" || token == "=" || token == "!=" || token == ">=" || token == "<=" || token == ">" || token == "<" || token == "do" || token == "rot" || token == "-rot") {
+				if (main.length < 2) {
+					FORTH_ERROR = STACK_UNDERFLOW;
+					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
+				} else if (!IN_DEFINITION) {
+					if (token == "+") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(second + first);
+					} else if (token == "-") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(second - first);
+					} else if (token == "*") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(second * first);
+					} else if (token == "/") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(second / first);
+					} else if (token == "^") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(pow(second, first));
+					} else if (token == "swap") {
+						first = main.pop();
+						second = main.pop();
+						main.push(first);
+						main.push(second);
+					} else if (token == "over") {
+						first = main.pop();
+						second = main.pop();
+						main.push(second);
+						main.push(first);
+						main.push(second);
+					} else if (token == "pick") {
+						n = Number(main.pop());
+						if (n < main.length && n >= 1) {
+							var popped = Array();
+							for (var j = 0; j < n; j++) {
+								popped.push(main.pop());
+							}
+							var picked = Number(main.pop());
+							main.push(picked);
+							for (var j = 0; j < n; j++) {
+								main.push(popped.pop());
+							}
+							main.push(picked);
+						} else {
+							FORTH_ERROR = PICK_OUT_OF_BOUNDS;
+							FORTH_ERROR_MESSAGE = "Pick out of bounds.";
 						}
-						else {
-							FORTH_ERROR = BAD_DEF_NAME;
-							FORT_ERROR_MESSAGE = "Definition must begin with a letter.";
-						}
-						i++;
 					}
-					else if ((token in window.user_def) && !IN_DEFINITION) // !IN_DEFINITION allows recursion
+					else if (token == "<")
 					{
-						var def = window.user_def[token];
+						second = Number(main.pop());
+						first = Number(main.pop());
+						main.push((first<second)?Number(FORTH_TRUE):FORTH_FALSE);
+					}
+					else if (token == ">")
+					{
+						second = Number(main.pop());
+						first = Number(main.pop());
+						console.log(first, second, first > second, Number(FORTH_TRUE), "f");
+						main.push((first>second)?Number(FORTH_TRUE):FORTH_FALSE);
+					}
+					else if (token == ">=") {
+						second = Number(main.pop());
+						first = Number(main.pop());
+						main.push((first>=second)?Number(FORTH_TRUE):FORTH_FALSE);
+					}
+					else if (token == "<=")
+					{
+						second = Number(main.pop());
+						first = Number(main.pop());
+						main.push((first<=second)?Number(FORTH_TRUE):FORTH_FALSE);
+					}
+					else if (token == "=")
+					{
+						second = Number(main.pop());
+						first = Number(main.pop());
+						main.push((first==second)?Number(FORTH_TRUE):FORTH_FALSE);
+					} else if (token == "!=")
+					{
+						second = Number(main.pop());
+						first = Number(main.pop());
+						main.push((first!=second)?Number(FORTH_TRUE):FORTH_FALSE);
+					} else if (token == "do")
+					{
 						var rest = Array();
+						var func_def = Array();
+						var index = main.pop();
+						var iterations = main.pop();
+						IN_DEFINITION = true;
+						for (i++; i<tokens.length && tokens[i].toLowerCase() != "loop"; i++)
+							func_def.push(tokens[i]);
 						for (i++;i < tokens.length;i++) // gather up remaining tokens
-						{
 							rest.push(tokens[i]);
-						}
-						if (FORTH_DEBUG)
-						{
-							console.log("recursive_def: "+window.user_def[token]);
-							console.log(main.join(" "));
-						}
-						interpret(def);
+						IN_DEFINITION = false;
+						for (;index < iterations; index++)
+							interpret(func_def.join(" "));
 						if (rest.length)
-							interpret(rest.join(" "));// interpret any remaining tokens
-					} else if (token == "clear")
+							interpret(rest.join(" "));
+					}
+                       else if (token == "rot")
+                       {
+                           var last = main.shift();
+                           main.push(last);
+                       }
+                       else if (token == "-rot") {
+                           var first = main.pop();
+                           main.unshift(first);
+                       }
+				}
+			// These functions have no requirements or are not found.
+			} else {
+				if (token == ":")
+				{
+					i++;
+					var existed = false;
+					var rest = Array();
+					var func = tokens[i].toLowerCase();					
+					var func_def = Array();
+					IN_DEFINITION = true;
+					for (i++;i<tokens.length && tokens[i] != ";"; i++)
+						func_def.push(tokens[i]);
+					for (i++;i < tokens.length;i++) // gather up remaining tokens
+						rest.push(tokens[i]);
+					IN_DEFINITION = false;
+					if (func in window.user_def)
+						existed = true;
+					window.user_def[func] = func_def.join(" ").trim();
+					if (rest.length)
+						interpret(rest.join(" "));
+					if (existed)
+						return "<def:" + func + "> modified";
+					return "<def:" + func + "> created";
+				}
+				else if ((token in window.user_def) && !IN_DEFINITION) // !IN_DEFINITION allows recursion
+				{
+					var def = window.user_def[token];
+					var rest = Array();
+					for (i++;i < tokens.length;i++) // gather up remaining tokens
 					{
-						main = [];
+						rest.push(tokens[i]);
 					}
-					else {
-						FORTH_ERROR = CMD_NOT_FOUND;
-						if (token == "")
-							token = "null";
-						FORTH_ERROR_MESSAGE = "<def:" + token + ";line:"+input+";pos:"+i+"> not found";
+					if (FORTH_DEBUG) {
+						console.log("recursive_def: "+window.user_def[token]);
+						console.log(main.join(" "));
 					}
+					interpret(def);
+					if (rest.length)
+						interpret(rest.join(" "));// interpret any remaining tokens
+				} else if (token == "clear") {
+					main = [];
+				} else {
+					FORTH_ERROR = CMD_NOT_FOUND;
+					if (token == "")
+						token = "null";
+					FORTH_ERROR_MESSAGE = "<def:" + token + ";line:"+input+";pos:"+i+"> not found";
 				}
 			}
 		}
@@ -417,6 +403,7 @@ function onInput(char) {
  * Initial setup
  */
 window.onload = function() {
+	// Set up the terminal
 	terminal = new Terminal({
 		screenReaderMode: true,
 		customGlyphs: true
@@ -425,4 +412,8 @@ window.onload = function() {
 	terminal.onData(onInput);
 	terminal.write(FORTH_TEXT);
 	displayPrompt();
+
+	// Add some more standard Forth words - written in Forth :)
+	interpret(": 2dup over over ;");
+	//interpret(": 2swap 3 roll 3 roll ;");		// He didn't define roll - TO-DO
 };
