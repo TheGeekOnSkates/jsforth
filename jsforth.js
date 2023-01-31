@@ -23,9 +23,7 @@ if (!String.prototype.trim) {
 	};
  }
 
-/*
- * CONSTANTS
- */
+// CONSTANTS
 var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to see some docs.",
 	FORTH_PROMPT = "\r\n>>> ",
 	FORTH_EOF = "bye",
@@ -124,8 +122,8 @@ function interpret(input) {
 	raw = input.split(" ");
 	for (var i = 0; i < tokens.length; i++) {
 		token = tokens[i];
-		if (FORTH_DEBUG)
-			console.log("current_token: "+token);
+		if (FORTH_DEBUG) console.log("current_token: "+token);
+		if (token == "\\") return;
 		if (!isNaN(parseFloat(token)) && isFinite(token)) {
 			main.push(token);
 		} else {
@@ -197,7 +195,7 @@ function interpret(input) {
 						main.push(first);
 					}
 				}
-			} else if (token == "+" || token == "-" || token == "*" || token == "^" || token == "/" || token == "swap" || token == "over" || token == "pick" || token == "=" || token == "!=" || token == ">=" || token == "<=" || token == ">" || token == "<" || token == "do" || token == "rot" || token == "-rot") {
+			} else if (["+", "-", "*", "^", "/", "mod", "swap", "over", "pick", "=", "<>", ">=", "<=", ">", "<", "do", "rot", "-rot", "lshift", "rshift", "and", "or", "xor"].indexOf(token) > -1) {
 				if (main.length < 2) {
 					FORTH_ERROR = STACK_UNDERFLOW;
 					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -218,6 +216,30 @@ function interpret(input) {
 						first = Number(main.pop());
 						second = Number(main.pop());
 						main.push(second / first);
+					} else if (token == "mod") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(second % first);
+					} else if (token == "lshift") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(second << first);
+					} else if (token == "rshift") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(second >> first);
+					} else if (token == "and") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(second & first);
+					} else if (token == "or") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(second | first);
+					} else if (token == "xor") {
+						first = Number(main.pop());
+						second = Number(main.pop());
+						main.push(second ^ first);
 					} else if (token == "^") {
 						first = Number(main.pop());
 						second = Number(main.pop());
@@ -415,5 +437,6 @@ window.onload = function() {
 
 	// Add some more standard Forth words - written in Forth :)
 	interpret(": 2dup over over ;");
+	interpret(": 2drop drop drop ;");
 	//interpret(": 2swap 3 roll 3 roll ;");		// He didn't define roll - TO-DO
 };
