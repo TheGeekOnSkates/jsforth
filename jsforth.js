@@ -48,6 +48,7 @@ var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to se
 	BAD_DEF_NAME = -5,
 	IF_EXPECTED_THEN = -6,
 	DIVISION_BY_ZERO = -7,
+	EXPECTED_VAR_NAME = -8,
 
 	// MESSAGES
 	FORTH_ERROR_GENERIC = "Forth Error.",	// Constant, basically a "something goofed but idk what" error (default/fallback)
@@ -148,13 +149,24 @@ function interpret(input) {
 				return "Stack max reallocated: "+FORTH_ALLOCATION;
 			} else if (token == "depth") {
 				main.push(main.length);
-                   continue;
+				continue;
 			} else if (token == ".s") {
-                   printBuffer.push("<" + main.length + "> " + main.join(" "));
-                   continue;
+				printBuffer.push("<" + main.length + "> " + main.join(" "));
+				continue;
 			} else if (token == "emit") {
-                   printBuffer.push(String.fromCharCode(main.pop()));
-                   continue;
+				printBuffer.push(String.fromCharCode(main.pop()));
+				continue;
+			} else if (token == "variable") {
+				i++;
+				if (i == tokens.length) {
+					FORTH_ERROR = EXPECTED_VAR_NAME;
+					FORTH_ERROR_MESSAGE = "expected variable name";
+					return;
+				}
+				if (FORTH_DEBUG) console.log("Defining variable: " + tokens[i] + " " + memoryPointer + " ;")
+				user_def[tokens[i]] = memoryPointer.toString();
+				memoryPointer++;
+				continue;
 			} else if (token == "rows") {
                    main.push(terminal.rows);
                    continue;
@@ -227,7 +239,7 @@ function interpret(input) {
 					}
 				}
 
-			// These words require that TWO  numbers be on the stack
+			// These words require that TWO numbers be on the stack
 			} else if (["+", "-", "*", "^", "/", "mod", "!", "swap", "over", "pick", "roll", "=", "<>", ">=", "<=", ">", "<", "do", "rot", "-rot", "lshift", "rshift", "and", "or", "xor", "type", "prompt", "js"].indexOf(token) > -1) {
 				if (main.length < 2) {
 					FORTH_ERROR = STACK_UNDERFLOW;
@@ -475,6 +487,14 @@ function displayPrompt(m) {
  * @param {string} char The data (might not just be one character)
  */
 function onInput(char) {
+	if (char[0] == "\033") {
+		// For now, just don't do anything.
+		// Eventually, I'd like to add suport for:
+		//		* Arrow keys
+		//		* Home/End
+		//		* Delete
+		return;
+	}
 	var code = char.charCodeAt(0);
 	if (char == "\r") {
 		RECUR_COUNT = 0;
