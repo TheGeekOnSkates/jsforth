@@ -54,12 +54,14 @@ var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to se
 	FORTH_ERROR_MESSAGE = "",				// Changes depending on what went wrong and where (more useful)
 
 	// MISC.
-	terminal,			// The terminal (lol obviously); now it's an xterm.js Terminal object
-	user_def = {},
-	main = [],			// Data stack
-	RECUR_COUNT = 0,
-	printBuffer = [],	// Stores terminal output
-	line = "";			// Stores terminal input
+	terminal,							// The terminal (lol obviously); now it's an xterm.js Terminal object
+	user_def = {},						// Dictionary of user-defined words
+	main = [],							// Data stack
+	memory = new Int32Array(65536),		// Memory for strings, variables and constants
+	memoryPointer = 0,					// Used when assigning variables/constants
+	RECUR_COUNT = 0,					
+	printBuffer = [],					// Stores terminal output
+	line = "";							// Stores terminal input
 
 /**
  * This is where most of the heavy lifting is done.  It actually interprets the user's code.
@@ -84,6 +86,42 @@ function interpret(input) {
 		token = tokens[i];
 		if (FORTH_DEBUG) console.log("current_token: "+token);
 		if (token == "\\") return;
+		if (token == ".\"") {
+			var printThis = [];
+			i++;
+			token = tokens[i];
+			while(!token.endsWith("\"")) {
+				printThis.push(raw[i]);
+				i++;
+				token = tokens[i];
+				if (FORTH_DEBUG) console.log("to be printed: "+token);
+			}
+			printThis.push(raw[i].replace('"', ''));
+			printBuffer.push(printThis.join(" "));
+			continue;
+		}
+		if (token == "s\"") {
+			var saveThis = [];
+			i++;
+			token = tokens[i];
+			while(!token.endsWith("\"")) {
+				saveThis.push(raw[i]);
+				i++;
+				token = tokens[i];
+				if (FORTH_DEBUG) console.log("to be stored: "+token);
+			}
+			saveThis.push(raw[i].replace('"', ''));
+			saveThis = saveThis.join(" ");
+			if (FORTH_DEBUG) console.log("Full string to be stored: "+saveThis);
+			main.push(memoryPointer);
+			main.push(saveThis.length);
+			for (var z = 0; z<saveThis.length; z++) {
+				memory[memoryPointer] = saveThis.charCodeAt(z);
+				memoryPointer++;
+			}
+			memoryPointer++;	// For the "NULL terminator"
+			continue;
+		}
 		if (token == "(") {
 			while(!token.endsWith(")")) {
 				i++;
@@ -92,7 +130,7 @@ function interpret(input) {
 			}
 			continue;
 		}
-		if (!isNaN(parseFloat(token)) && isFinite(token)) {
+		if (!isNaN(parseInt(token)) && isFinite(token)) {
 			main.push(token);
 		} else {
 			token = token.toLowerCase();
@@ -117,7 +155,7 @@ function interpret(input) {
 			} else if (token == "emit") {
                    printBuffer.push(String.fromCharCode(main.pop()));
                    continue;
-               }
+			}
 
 			if ([".", "if", "invert", "drop", "dup", "abs"].indexOf(token) > -1) {
 				if (main.length < 1 || IN_DEFINITION == true) {
@@ -381,6 +419,10 @@ function displayPrompt(m) {
 	terminal.focus();
 }
 
+/**
+ * The terminal's onData event handler
+ * @param {string} char The data (might not just be one character)
+ */
 function onInput(char) {
 	var code = char.charCodeAt(0);
 	if (char == "\r") {
@@ -400,7 +442,7 @@ function onInput(char) {
 		FORTH_ERROR = "";
 	} else if (code == 8 || code == 127) {
 		if (line !== "") {
-			line = line.substr(0, line.length - 2);
+			line = line.substr(0, line.length - 1);
 			terminal.write("\033[D \033[D");
 		}
 	} else {
