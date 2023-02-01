@@ -49,6 +49,7 @@ var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to se
 	IF_EXPECTED_THEN = -6,
 	DIVISION_BY_ZERO = -7,
 	EXPECTED_VAR_NAME = -8,
+	JS_ERROR = -9,
 
 	// MESSAGES
 	FORTH_ERROR_GENERIC = "Forth Error.",	// Constant, basically a "something goofed but idk what" error (default/fallback)
@@ -137,7 +138,12 @@ function interpret(input) {
 			continue;
 		}
 		if (!isNaN(parseInt(token)) && isFinite(token)) {
-			main.push(token);
+			if (token.indexOf(".") > -1) {
+				var n = parseInt(token.replace(".", ""));
+				 main.push(n);
+				 main.push(n > 0 ? 0 : -1);
+			}
+			else main.push(parseInt(token));
 		} else {
 			token = token.toLowerCase();
 			if (token == "cls") {
@@ -181,7 +187,7 @@ function interpret(input) {
 			}
 
 			// These words require ONE number to be on the stack.
-			if ([".", "if", "invert", "drop", "dup", "abs", "count", "@", "constant"].indexOf(token) > -1) {
+			if ([".", "if", "invert", "drop", "dup", "abs", "count", "@", "constant", "allot"].indexOf(token) > -1) {
 				if (main.length < 1 || IN_DEFINITION == true) {
 					FORTH_ERROR = STACK_UNDERFLOW;
 					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -221,6 +227,8 @@ function interpret(input) {
 						main.pop();
 					} else if (token == "abs") {
 						main.push(Math.abs(parseInt(main.pop())));
+					} else if (token == "allot") {
+						memoryPointer += main.pop();
 					} else if (token == "@") {
 						var addr = main.pop();
 						if (!addr < 0 || addr > memory.length) {
@@ -350,7 +358,12 @@ function interpret(input) {
 						for(; start<length; start++) {
 							str += String.fromCharCode(memory[start]);
 						}
-						eval(str);
+						try { eval(str); } catch(e) {
+							if (FORTH_DEBUG) console.log("JS error: ", e);
+							FORTH_ERROR = JS_ERROR;
+							FORTH_ERROR_MESSAGE = e.message || e;
+							return;
+						}
 					} else if (token == "pick") {
 						n = parseInt(main.pop());
 						if (n < main.length && n >= 1) {

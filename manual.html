@@ -6,10 +6,13 @@
 	<style>
 	pre {background:#DDD;padding:2px;}
 	code {background:#DDD;}
+	header {display:flex;}
+	.logo {width: auto;height:64px;}
 	</style>
 </head>
 <body>
 	<header>
+		<img src="forth.png" alt="" class="logo" />
 		<h1>JSForth User's Manual</title>
 	</header>
 	<nav>
@@ -53,6 +56,8 @@
 					<li><a href="#clear">CLEAR</a></li>
 					<li><a href="#cls">CLS</a></li>
 					<li><a href="#debug">DEBUG</a></li>
+					<li><a href="#js">JS</a></li>
+					<li><a href="#prompt">PROMPT</a></li>
 				</ul>
 			</li>
 		</ol>
@@ -178,8 +183,24 @@ dup docBody append dup s" Heading text here" innerText
 		<p>Clears the terminal screen.  This has no stack effects.</p>
 		<h2 id="debug">DEBUG</h2>
 		<p>Turns debug mode on or off.  WHen debug mode is on, JSForth will log what it's doing to the JS console (in the browser developer tools)</p>
+		<h2 id="js">JS</h2>
+		<p>Runs JavaScript code.  This word expects two numbers to be on the stack: the topmost being the length of the string and the next being a pointer to the string in memory.  For example:
+		<pre>S" alert('Check it out!');" js</pre>
+		<p>When you run <code>S"</code>, the two numbers I just listed are pushed onto the stack.  Then JSForth sees the word <code>JS</code> and evaluates that astring as JavaScript.  If there's an error, it'll show up in the terminal.</p>
+		<h2 id="prompt">PROMPT</h2>
+		<p>Changes the prompt (the ">>>") to something else.  For example:</p>
+		<pre>10 0 ! 13 1 ! 0 2 prompt</pre>
+		<p>The end result is that there is no prompt.  This is actually my preference, since most of the Forths I use don't have a prompt.  But you can set it to whatever you like.  Here's how that works:</p>
+		<ol>
+			<li><code>10 0 !</code> puts the number 10 (a carriage return or <code>\r</code>) into memory address #0</li>
+			<li><code>13 1 !</code> puts the number 13 (a line feed or <code>\n</code>) into memory address #1</li>
+			<li><code>0 2 prompt</code> tells JSForth to use memory address #0 (which now contains <code>\r\n</code>) as the new prompt.</li>
+		</ol>
+		<p>However, there is a simpler way, using the <code>JS</code> word.  That would be by setting the <code>FORTH_PROMPT</code> JS variable.  Here's how to do that:</p>
+		<pre>s" FORTH_PROMPT = '\r\nGo: ';" js</pre>
+		<p>Either way, you can do all kinds of cool things for the prompt using ANSI escape codes.</p>
 		<!--
-		ALLOCATE JS ROWS COLS
+		ALLOCATE ROWS COLS
 		Words I'd like to add:
 			INCLUDE (from localStorage)
 			SAVE (to localStorage)
