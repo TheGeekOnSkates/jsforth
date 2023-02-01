@@ -56,7 +56,8 @@ var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to se
 
 	// MISC.
 	terminal,							// The terminal (lol obviously); now it's an xterm.js Terminal object
-	user_def = {},						// Dictionary of user-defined words
+	user_def = {},						// Dictionary of user-defined words (and also variables)
+	constants = {},						// Dictionary of user-defined constants
 	main = [],							// Data stack
 	memory = new Int32Array(65536),		// Memory for strings, variables and constants
 	memoryPointer = 0,					// Used when assigning variables/constants
@@ -87,6 +88,10 @@ function interpret(input) {
 		token = tokens[i];
 		if (FORTH_DEBUG) console.log("current_token: "+token);
 		if (token == "\\") return;
+		if (constants.hasOwnProperty(token)) {
+			main.push(constants[token]);
+			continue;
+		}
 		if (token == ".\"") {
 			var printThis = [];
 			i++;
@@ -176,7 +181,7 @@ function interpret(input) {
 			}
 
 			// These words require ONE number to be on the stack.
-			if ([".", "if", "invert", "drop", "dup", "abs", "count", "@"].indexOf(token) > -1) {
+			if ([".", "if", "invert", "drop", "dup", "abs", "count", "@", "constant"].indexOf(token) > -1) {
 				if (main.length < 1 || IN_DEFINITION == true) {
 					FORTH_ERROR = STACK_UNDERFLOW;
 					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -224,6 +229,16 @@ function interpret(input) {
 							return;
 						}
 						else main.push(memory[addr]);
+					} else if (token == "constant") {
+						i++;
+						if (i == tokens.length) {
+							FORTH_ERROR = EXPECTED_VAR_NAME;
+							FORTH_ERROR_MESSAGE = "expected constant name";
+							return;
+						}
+						if (FORTH_DEBUG) console.log("Defining constant: " + tokens[i] + " " + memoryPointer + " ;")
+						constants[tokens[i]] = main.pop().toString();
+						continue;
 					} else if (token == "count") {
 						var n = 0, z = main.pop();
 						main.push(z);
