@@ -155,10 +155,16 @@ function interpret(input) {
 			} else if (token == "emit") {
                    printBuffer.push(String.fromCharCode(main.pop()));
                    continue;
+			} else if (token == "rows") {
+                   main.push(terminal.rows);
+                   continue;
+			} else if (token == "cols") {
+                   main.push(terminal.cols);
+                   continue;
 			}
 
 			// These words require ONE number to be on the stack.
-			if ([".", "if", "invert", "drop", "dup", "abs", "count"].indexOf(token) > -1) {
+			if ([".", "if", "invert", "drop", "dup", "abs", "count", "@"].indexOf(token) > -1) {
 				if (main.length < 1 || IN_DEFINITION == true) {
 					FORTH_ERROR = STACK_UNDERFLOW;
 					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -198,6 +204,14 @@ function interpret(input) {
 						main.pop();
 					} else if (token == "abs") {
 						main.push(Math.abs(parseInt(main.pop())));
+					} else if (token == "@") {
+						var addr = main.pop();
+						if (!addr < 0 || addr > memory.length) {
+							FORTH_ERROR = DIVISION_BY_ZERO;
+							FORTH_ERROR_MESSAGE = "<def:" + token + ";line:"+input+";pos:"+i+"> invalid memory address";
+							return;
+						}
+						else main.push(memory[addr]);
 					} else if (token == "count") {
 						var n = 0, z = main.pop();
 						main.push(z);

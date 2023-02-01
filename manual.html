@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
 	<title>JSForth User's Manual</title>
+	<link rel="shortcut icon" href="forth.png" />
 	<style>
-	code {background:#DDD;padding:2px;}
+	pre {background:#DDD;padding:2px;}
+	code {background:#DDD;}
 	</style>
 </head>
 <body>
@@ -13,8 +15,14 @@
 	<nav>
 		<h1>Contents</h1>
 		<ol>
-			<li><a href="#intro">Overview</a></li>
 			<li>
+				<a href="#intro">Overview</a>
+				<ol>
+					<li><a href="#noobz">For beginners</a></li>
+					<li><a href="#pros">For experienced programmers</a></li>
+					<li><a href="#roadmap">Roadmap to version 1.0</a></li>
+				</ol>
+			</li><li>
 				<a href="#words">Supported standard Forth words</a>
 				<ul>
 					<li><a href="#leftParen">(</a></li>
@@ -24,6 +32,18 @@
 					<li><a href="#times">*</a></li>
 					<li><a href="#slash">/</a></li>
 					<li><a href="#mod">MOD</a></li>
+					<li><a href="#gt">></a></li>
+					<li><a href="#lt"><</a></li>
+					<li><a href="#equals">=</a></li>
+				<!-- TO BE DOCUMENTED
+				<= >= <> 0= 0< 1+ 1- lshift rshift and or xor . .s emit @ !
+				abs dup swap rot pick roll drop over invert
+				if ... then do ... loop : ;
+				
+
+				See https://forth-standard.org/standard/core
+				for words to be added :)
+				-->
 				</ul>
 			</li>
 			<li>
@@ -32,55 +52,85 @@
 					<li><a href="#pow">^</a></li>
 					<li><a href="#clear">CLEAR</a></li>
 					<li><a href="#cls">CLS</a></li>
+					<li><a href="#debug">DEBUG</a></li>
 				</ul>
-				<!-- TO BE DOCUMENTED
-				< > <= >= = != 0= 0< 1+ 1- lshift rshift and or xor . .s emit
-				abs dup swap rot pick roll drop over invert
-				if ... then do ... loop : ;
-				
-
-				See https://forth-standard.org/standard/core
-				for words to be added :)
-				-->
 			</li>
 		</ol>
 	</nav>
 	<main>
 		<h1 id="intro">Overview</h1>
+		<h2 id="noobz">For beginners</h2>
 		<p>
 			This is a Forth implementation in Javascript, with a REPL using <a href="https://xtermjs.org/" target="_blank">xterm.js</a>.
 			It started out as a student's college assignment, but it has the potential to be something much cooler and more useful.
-			For more info on Forth, see <a href=https://www.forth.com/starting-forth/">Starting FORTH</a>.  It's a simple stack-based
+			For more info on Forth, see <a href=https://www.forth.com/starting-forth/">Starting FORTH</a>, one of the best tutorials
+			- on any language - I've ever seen (and I've been coding for 10+ years so I've seen a lot, lol).  Forth is a stack-based
 			language, low-level in some ways and yet high-level in others.  The best (or at least funniest) description I ever read is
 			in <a href="https://hackaday.com/2017/01/27/forth-the-hackers-language/" target="_blank">this article</a>: "Forth is what
 			you’d get if Python slept with Assembly Language: interactive, expressive, and without syntactical baggage, but still very
 			close to the metal. Is it a high-level language or a low-level language? Yes! Or rather, it’s the shortest path from one to
-			the other."  Who wouldn't want that in a brwoser? 🤣
+			the other."  So true! 🤣
+		</p>
+		<h2 id="pros">For experienced programmers</h2>
+		<p>
+			All joking aside, the simplicity and power of Forth is hard to ignore.  It's as old as C, maybe older, and yet (like C) is
+			still very relevant in this decade.  Of course we retro-lovers can use it on 8-bit computers, but it's not just a "toy" like
+			8-bit BASICs.  It's used in embedded systems, and (strange but awesome) in outer-space-related code!  Or so they say on the
+			interwebz.  I've also seen very polished, proprietary Forths for desktop and mobile devices, complete with words that call
+			native APIs and all the bells and whistles a programmer could possibly want.  Some examples include
+			<a href="https://8th-dev.com/" target="_blank">8th</a> and <a href="https://www.forth.com/swiftforth/" target="_blank">SwiftForth</a>
+			(I haven't used either, but I like the sound of 8th especially).  But those aren't freed software.  So, the FOSS community
+			created <a href="https://gforth.org/" target="_blank">Gforth</a>, <a href="https://github.com/philburk/pforth/" target="_blank">Pforth</a>,
+			and many, many more.  But surprisingly, there doesn't seem to have been any serious-ish attempt at a Forth for the web.
+		</p>
+		<h2 id="roadmap">Roadmap to version 1.0</h2>
+		<p>
+			No two Forth variants are exactly the same.  There are differences between Gforth and SwiftForth, 8th and Pforth, etc. to say nothing of all
+			the embedded and retro Forths out there.  Even with the same code base, Gforth for MS-DOS is not going to be the same as Gforth for Linux.
+			A <a href="https://forth-standard.org/" target="_blank">standard</a> does exist, but there's a saying that "If you've seen one Forth... you've
+			seen one Forth."  This makes sense, because every time someone builds a Forth, they usually have some specialized functionality in mind that
+			is not possible anywhere else.  So while I do hope to include a <em>TON</em> of the standard words, this Forth isn't going to be "compliant"
+			with any super-strict standards.  But frankly, even languages that have hard-and-fast standards are not "set in stone".  Like C - it all depends
+			on the compiler.  Or Python (who's still Netflix'n'chilling with Assembly 🤣) or PHP or even Java - it's all about the interpreter/runtime.  So,
+			JSForth will try to be predictable for people who know Forth well... but we're not gonna stress the standards.
+		</p><p>
+			Instead, allow me to share my vision for this Forth.  Put simply, all the best parts of Forth, plus all the best parts of the web.  Like what if
+			you could do something like this:
+			<pre>\ Easily set up a canvas, include remote code using AJAX/Fetch, play audio, read a game controller and 
+include "http://mywebsite.com/game.fs"
+key s" theme.ogg" play
+canvas-on black fill s" Mario.png" draw-image
+start-game
+
+\ Or, how about a little DOM stuff
+include html5.fs    \ from localStorage
+s" h1" createElement dup s" test" css-class
+dup docBody append dup s" Heading text here" innerText
+
+\ Or, working with localStorage, web APIs, JSON etc... Maybe not the best idea,
+\ but should be easily doable cuz Forth rocks and a JS Forth should be able to do that.</pre>
 		</p>
 		<h1 id="words">Supported standard Forth words</h1>
 		<p>Note that in this manual, I'm using uppercase just out of convention.  The Forth standard does it, all the tutorials I've seen do it, so it made sense to do that here too.  But don't worry - none of these words are case-sensitive (so dup, DUP and Dup all do the same thing).</p>
 		<h2 id="leftParen">(</h2>
 		<p>Starts a comment.  For example:</p>
-		<code>: doop ( more phonetically correct) dup ;</code>
+		<pre>: doop ( more phonetically correct) dup ;</pre>
 		<p>In this goofy and kind of pointless example, created a new word "doop" that just runs "dup".  But I explained why in a comment.  Note that, like in nearly all Forths, there has to be a space after the "(" character for this to work.  Doing this has no effect on the stack, so it's a nice way to add comments in your code.</p>
 		<p>In fact, the Forth community has kind of adopted this type of comment as a way to tell us what a word does to the stack.  If I wanted to do that with my dopey doop example, my code might look something like this:</p>
-		<code>: doop ( number -- number numberAgain ) dup ;</code>
+		<pre>: doop ( number -- number numberAgain ) dup ;</pre>
 		<p>There's also a form of shorthand that's probably in the standard by now, like using "n" instead of "number", but that is beyond the scope of this manual.</p>
 		<h2 id="comment">\</h2>
 		<p>This is another way to write a comment.  The difference here is that you don't have to "close it".  This is like "//" or "#" in other languages.  For example:</p>
-		<code>: one year 60 24 * 365 * ;    \ 60 minutes * 24 hours * 365 days</code>
+		<pre>: one year 60 24 * 365 * ;    \ 60 minutes * 24 hours * 365 days</pre>
 		<h2 id="plus">+</h2>
 		<p>Pops the top two numbers off the stack, adds them, and pushes the result onto the stack.  For example:</p>
-		<code>3 4 +</code>
-		<p>Displays: Nothing; Stack: 7</p>
+		<pre>3 4 +     \ Displays: Nothing; Stack: 7</pre>
 		<h2 id="minus">-</h2>
 		<p>Pops the top two numbers off the stack, subtracts the second from the first, and pushes the result onto the stack.  For example:</p>
-		<code>10 2 -</code>
-		<p>Displays: Nothing; Stack: 8</p>
+		<pre>10 2 -    \ Displays: Nothing; Stack: 8</pre>
 		<h2 id="times">*</h2>
 		<p>Pops the top two numbers off the stack, multiplies them, and pushes the result onto the stack.  For example:</p>
-		<code>5 8 *</code>
-		<p>Displays: Nothing; Stack: 40</p>
+		<pre>5 8 *     \ Displays: Nothing; Stack: 40</pre>
 		<h2 id="slash">/</h2>
 		<p>Pops the top two numbers off the stack, divides the second by the first, and pushes the result onto the stack.  A few important notes here:</p>
 		<ul>
@@ -88,8 +138,7 @@
 			<li>Trying to divide by zero will show an error.</li>
 		</ul>
 		<p>For example:</p>
-		<code>10 2 /</code>
-		<p>Displays: Nothing; Stack: 5</p>
+		<pre>10 2 /     \ Displays: Nothing; Stack: 5</pre>
 		<h2 id="mod">MOD</h2>
 		<p>Pops the top two numbers off the stack, divides the second by the first, and pushes the remainder (die-hard Roman math lovers call this "Modulus" and/or "Modulo" - sorry, I don't have any Roman buddies to confirm the exact usage, so I'm calling it "remainder") onto the stack.  Note that just like with <code>/</code>:</p>
 		<ul>
@@ -97,10 +146,19 @@
 			<li>Trying to divide by zero will show an error.</li>
 		</ul>
 		<p>For example:</p>
-		<code>10 3 mod</code>
-		<p>Displays: Nothing; Stack: 1</p>
-
-
+		<pre>10 3 MOD     \ Displays: Nothing; Stack: 1</pre>
+		<h2 id="gt">></h2>
+		<p>Pops the top two numbers off the stack, and pushes -1 on the stack if the first number is greater, or 0 if not.  For example:</p>
+		<pre>10 12 > .     \ Displays 0 because 10 is not greater than 12
+10 6 > .      \ Displays -1 because 10 is greater than 6</pre>
+		<h2 id="lt"><</h2>
+		<p>Pops the top two numbers off the stack, and pushes -1 on the stack if the first number is less, or 0 if not.  For example:</p>
+		<pre>7 5 < .     \ Displays 0 because 7 is not less than 5
+		7 10 < .    \ Displays -1 because 7 is less than 10</pre>
+		<h2 id="equals">=</h2>
+		<p>Pops the top two numbers off the stack, and pushes -1 on the stack if they are the same, or 0 if not.  For example:</p>
+		<pre>7 7 = .           \ Displays -1 because 7 = 7
+7 123 = .         \ Displays 0 because 7 is not 123 (lol)</pre>
 
 
 		<h1 id="JSForthWords">JSForth-specific words</h1>
@@ -118,10 +176,11 @@
 		</code>
 		<h2 id="cls">CLS</h2>
 		<p>Clears the terminal screen.  This has no stack effects.</p>
+		<h2 id="debug">DEBUG</h2>
+		<p>Turns debug mode on or off.  WHen debug mode is on, JSForth will log what it's doing to the JS console (in the browser developer tools)</p>
 		<!--
-		CLEAR CLS DEBUG ALLOCATE
+		ALLOCATE JS ROWS COLS
 		Words I'd like to add:
-			JS (eval)
 			INCLUDE (from localStorage)
 			SAVE (to localStorage)
 			FETCH (for communicating with external servers)
