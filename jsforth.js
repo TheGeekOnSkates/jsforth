@@ -119,7 +119,7 @@ function interpret(input) {
                    continue;
                }
 
-			if ([".", "if", "invert", "drop", "dup"].indexOf(token) > -1) {
+			if ([".", "if", "invert", "drop", "dup", "abs"].indexOf(token) > -1) {
 				if (main.length < 1 || IN_DEFINITION == true) {
 					FORTH_ERROR = STACK_UNDERFLOW;
 					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -157,6 +157,8 @@ function interpret(input) {
 						main.push((top * -1) - 1);
 					} else if (token == "drop") {
 						main.pop();
+					} else if (token == "abs") {
+						main.push(Math.abs(parseInt(main.pop())));
 					} else if (token == "dup") {
 						first = main.pop();
 						main.push(first);
@@ -219,9 +221,9 @@ function interpret(input) {
 						second = Number(main.pop());
 						main.push(second ^ first);
 					} else if (token == "^") {
-						first = Number(main.pop());
-						second = Number(main.pop());
-						main.push(pow(second, first));
+						first = parseInt(main.pop());
+						second = parseInt(main.pop());
+						main.push(Math.pow(second, first));
 					} else if (token == "swap") {
 						a = main.pop();
 						b = main.pop();
@@ -430,4 +432,8 @@ window.onload = function() {
 	interpret(": 2swap 3 roll 3 roll ;");
 	interpret(": 2over 3 pick 3 pick ;");
 	interpret(": */ -rot * swap / ;");
+	interpret(": 0< 0 < ;");
+	interpret(": 0= 0 = ;");
+	interpret(": 1+ 1 + ;");
+	interpret(": 1- 1 - ;");
 };

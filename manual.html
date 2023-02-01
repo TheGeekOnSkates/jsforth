@@ -9,21 +9,24 @@
 		<ol>
 			<li><a href="#intro">Overview</a></li>
 			<li>
-				<a href="#words">Supported words</a>
+				<a href="#words">Supported standard Forth words</a>
 				<ul>
+					<li><a href="#leftParen">(</a></li>
+					<li><a href="#comment">\</a></li>
 					<li><a href="#plus">+</a></li>
 					<li><a href="#minus">-</a></li>
 					<li><a href="#times">*</a></li>
 					<li><a href="#slash">/</a></li>
 					<li><a href="#mod">mod</a></li>
 				</ul>
+				<a href="#JSForthWords">JSForth-specific words</a>
 				<!-- TO BE DOCUMENTED
-				^ < > <= >= = != 
+				^ < > <= >= = != 0= 0< 1+ 1-
 				lshift rshift and or xor
 				. .s emit
-				dup swap rot pick roll drop over
+				abs dup swap rot pick roll drop over
 				if ... then do ... loop : ;
-				invert negate clear cls allocate debug
+				invert negate
 
 				See https://forth-standard.org/standard/core
 				for words to be added :)
@@ -43,7 +46,17 @@
 			close to the metal. Is it a high-level language or a low-level language? Yes! Or rather, it’s the shortest path from one to
 			the other."  Who wouldn't want that in a brwoser? 🤣
 		</p>
-		<h1 id="words">Supported words</h1>
+		<h1 id="words">Supported standard Forth words</h1>
+		<h2 id="leftParen">(</h2>
+		<p>Starts a comment.  For example:</p>
+		<code>: doop ( more phonetically correct) dup ;</code>
+		<p>In this goofy and kind of pointless example, created a new word "doop" that just runs "dup".  But I explained why in a comment.  Note that, like in nearly all Forths, there has to be a space after the "(" character for this to work.  Doing this has no effect on the stack, so it's a nice way to add comments in your code.</p>
+		<p>In fact, the Forth community has kind of adopted this type of comment as a way to tell us what a word does to the stack.  If I wanted to do that with my dopey doop example, my code might look something like this:</p>
+		<code>: doop ( number -- number numberAgain ) dup ;</code>
+		<p>There's also a form of shorthand that's probably in the standard by now, like using "n" instead of "number", but that is beyond the scope of this manual.</p>
+		<h2 id="comment">\</h2>
+		<p>This is another way to write a comment.  The difference here is that you don't have to "close it".  This is like "//" or "#" in other languages.  For example:</p>
+		<code>: one year 60 24 * 365 * ;    \ 60 minutes * 24 hours * 365 days</code>
 		<h2 id="plus">+</h2>
 		<p>Pops the top two numbers off the stack, adds them, and pushes the result onto the stack.  For example:</p>
 		<code>3 4 +</code>
@@ -74,6 +87,26 @@
 		<p>For example:</p>
 		<code>10 3 mod</code>
 		<p>Displays: Nothing; Stack: 1</p>
+
+
+
+
+		<h1 id="JSForthWords">JSForth-specific words</h1>
+		<h2 id="pow">^</h2>
+		<p>This calculates exponents.  For example:</p>
+		<code>
+		2 2 * 2 * .    \ 2 * 2 * 2 = 8.  OR you could do...
+		2 3 ^ .        \ 2 to the third power = 8
+		</code>
+		<!--
+		CLEAR CLS DEBUG ALLOCATE
+		Words I'd like to add:
+			JS (eval)
+			INCLUDE (from localStorage)
+			SAVE (to localStorage)
+			FETCH (for communicating with external servers)
+			Words for canvas, audio, maybe DOM, etc.
+		-->
 	</main>
 </body>
 </html>
