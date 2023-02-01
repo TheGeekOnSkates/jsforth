@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
 	<title>JSForth User's Manual</title>
+	<style>
+	code {background:#DDD;padding:2px;}
+	</style>
 </head>
 <body>
+	<header>
+		<h1>JSForth User's Manual</title>
+	</header>
 	<nav>
 		<h1>Contents</h1>
 		<ol>
@@ -17,16 +23,21 @@
 					<li><a href="#minus">-</a></li>
 					<li><a href="#times">*</a></li>
 					<li><a href="#slash">/</a></li>
-					<li><a href="#mod">mod</a></li>
+					<li><a href="#mod">MOD</a></li>
 				</ul>
+			</li>
+			<li>
 				<a href="#JSForthWords">JSForth-specific words</a>
+				<ul>
+					<li><a href="#pow">^</a></li>
+					<li><a href="#clear">CLEAR</a></li>
+					<li><a href="#cls">CLS</a></li>
+				</ul>
 				<!-- TO BE DOCUMENTED
-				^ < > <= >= = != 0= 0< 1+ 1-
-				lshift rshift and or xor
-				. .s emit
-				abs dup swap rot pick roll drop over
+				< > <= >= = != 0= 0< 1+ 1- lshift rshift and or xor . .s emit
+				abs dup swap rot pick roll drop over invert
 				if ... then do ... loop : ;
-				invert negate
+				
 
 				See https://forth-standard.org/standard/core
 				for words to be added :)
@@ -47,6 +58,7 @@
 			the other."  Who wouldn't want that in a brwoser? 🤣
 		</p>
 		<h1 id="words">Supported standard Forth words</h1>
+		<p>Note that in this manual, I'm using uppercase just out of convention.  The Forth standard does it, all the tutorials I've seen do it, so it made sense to do that here too.  But don't worry - none of these words are case-sensitive (so dup, DUP and Dup all do the same thing).</p>
 		<h2 id="leftParen">(</h2>
 		<p>Starts a comment.  For example:</p>
 		<code>: doop ( more phonetically correct) dup ;</code>
@@ -78,7 +90,7 @@
 		<p>For example:</p>
 		<code>10 2 /</code>
 		<p>Displays: Nothing; Stack: 5</p>
-		<h2 id="mod">mod</h2>
+		<h2 id="mod">MOD</h2>
 		<p>Pops the top two numbers off the stack, divides the second by the first, and pushes the remainder (die-hard Roman math lovers call this "Modulus" and/or "Modulo" - sorry, I don't have any Roman buddies to confirm the exact usage, so I'm calling it "remainder") onto the stack.  Note that just like with <code>/</code>:</p>
 		<ul>
 			<li>This is whole-number ("integer") division; there are no decimal places in the result.</li>
@@ -98,6 +110,14 @@
 		2 2 * 2 * .    \ 2 * 2 * 2 = 8.  OR you could do...
 		2 3 ^ .        \ 2 to the third power = 8
 		</code>
+		<h2 id="clear">CLEAR</h2>
+		<p>Clears the stack, mo matter how many nnumbers are on it.  For example:</p>
+		<code>
+		1 2 3 4 .S     \ This would print the stack, which would contain numbers 1-4
+		CLEAR .S       \ Again, .S would print the stack, but the stack is now empty.
+		</code>
+		<h2 id="cls">CLS</h2>
+		<p>Clears the terminal screen.  This has no stack effects.</p>
 		<!--
 		CLEAR CLS DEBUG ALLOCATE
 		Words I'd like to add:
