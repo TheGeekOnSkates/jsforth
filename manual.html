@@ -28,6 +28,7 @@
 			</li><li>
 				<a href="#words">Supported standard Forth words</a>
 				<ul>
+					<li><a href="#store">@ and !</a></li>
 					<li><a href="#leftParen">(</a></li>
 					<li><a href="#comment">\</a></li>
 					<li><a href="#plus">+</a></li>
@@ -38,12 +39,14 @@
 					<li><a href="#gt">></a></li>
 					<li><a href="#lt"><</a></li>
 					<li><a href="#equals">=</a></li>
+					<li><a href="#notEqual"><></a></li>
+					<li><a href="#gte">>=</a></li>
+					<li><a href="#lte"><=</a></li>
 				<!-- TO BE DOCUMENTED
-				<= >= <> 0= 0< 1+ 1- lshift rshift and or xor . .s emit @ !
+				0= 0< 1+ 1- lshift rshift and or xor . .s emit @ !
 				abs dup swap rot pick roll drop over invert
 				if ... then do ... loop : ;
 				
-
 				See https://forth-standard.org/standard/core
 				for words to be added :)
 				-->
@@ -115,28 +118,34 @@ dup docBody append dup s" Heading text here" innerText
 \ Or, working with localStorage, web APIs, JSON etc... Maybe not the best idea,
 \ but should be easily doable cuz Forth rocks and a JS Forth should be able to do that.</pre>
 		</p>
+		<hr />
 		<h1 id="words">Supported standard Forth words</h1>
 		<p>Note that in this manual, I'm using uppercase just out of convention.  The Forth standard does it, all the tutorials I've seen do it, so it made sense to do that here too.  But don't worry - none of these words are case-sensitive (so dup, DUP and Dup all do the same thing).</p>
-		<h2 id="leftParen">(</h2>
+		<h3 id="store">@ and !</h3>
+		<p>Gets/sets a number in memory.  This pops the top 2 numbers off the stack; the first (topmost) is treated as a memory address, and the next is the value to put there.  Here's an example:</p>
+		<pre>variable x     \ Creates a variable; now when we use "x" on the next line, its memory address will be pushed on the stack
+42 x !         \ Now x = 42
+x @ .          \ @ gets the value of x, and . prints it, so you should see "42"</pre>
+		<h3 id="leftParen">(</h3>
 		<p>Starts a comment.  For example:</p>
 		<pre>: doop ( more phonetically correct) dup ;</pre>
 		<p>In this goofy and kind of pointless example, created a new word "doop" that just runs "dup".  But I explained why in a comment.  Note that, like in nearly all Forths, there has to be a space after the "(" character for this to work.  Doing this has no effect on the stack, so it's a nice way to add comments in your code.</p>
 		<p>In fact, the Forth community has kind of adopted this type of comment as a way to tell us what a word does to the stack.  If I wanted to do that with my dopey doop example, my code might look something like this:</p>
 		<pre>: doop ( number -- number numberAgain ) dup ;</pre>
 		<p>There's also a form of shorthand that's probably in the standard by now, like using "n" instead of "number", but that is beyond the scope of this manual.</p>
-		<h2 id="comment">\</h2>
+		<h3 id="comment">\</h3>
 		<p>This is another way to write a comment.  The difference here is that you don't have to "close it".  This is like "//" or "#" in other languages.  For example:</p>
 		<pre>: one year 60 24 * 365 * ;    \ 60 minutes * 24 hours * 365 days</pre>
-		<h2 id="plus">+</h2>
+		<h3 id="plus">+</h3>
 		<p>Pops the top two numbers off the stack, adds them, and pushes the result onto the stack.  For example:</p>
 		<pre>3 4 +     \ Displays: Nothing; Stack: 7</pre>
-		<h2 id="minus">-</h2>
+		<h3 id="minus">-</h3>
 		<p>Pops the top two numbers off the stack, subtracts the second from the first, and pushes the result onto the stack.  For example:</p>
 		<pre>10 2 -    \ Displays: Nothing; Stack: 8</pre>
-		<h2 id="times">*</h2>
+		<h3 id="times">*</h3>
 		<p>Pops the top two numbers off the stack, multiplies them, and pushes the result onto the stack.  For example:</p>
 		<pre>5 8 *     \ Displays: Nothing; Stack: 40</pre>
-		<h2 id="slash">/</h2>
+		<h3 id="slash">/</h3>
 		<p>Pops the top two numbers off the stack, divides the second by the first, and pushes the result onto the stack.  A few important notes here:</p>
 		<ul>
 			<li>This is whole-number ("integer") division; there are no decimal places in the result.</li>
@@ -144,7 +153,7 @@ dup docBody append dup s" Heading text here" innerText
 		</ul>
 		<p>For example:</p>
 		<pre>10 2 /     \ Displays: Nothing; Stack: 5</pre>
-		<h2 id="mod">MOD</h2>
+		<h3 id="mod">MOD</h3>
 		<p>Pops the top two numbers off the stack, divides the second by the first, and pushes the remainder (die-hard Roman math lovers call this "Modulus" and/or "Modulo" - sorry, I don't have any Roman buddies to confirm the exact usage, so I'm calling it "remainder") onto the stack.  Note that just like with <code>/</code>:</p>
 		<ul>
 			<li>This is whole-number ("integer") division; there are no decimal places in the result.</li>
@@ -152,20 +161,33 @@ dup docBody append dup s" Heading text here" innerText
 		</ul>
 		<p>For example:</p>
 		<pre>10 3 MOD     \ Displays: Nothing; Stack: 1</pre>
-		<h2 id="gt">></h2>
+		<h3 id="gt">></h3>
 		<p>Pops the top two numbers off the stack, and pushes -1 on the stack if the first number is greater, or 0 if not.  For example:</p>
 		<pre>10 12 > .     \ Displays 0 because 10 is not greater than 12
 10 6 > .      \ Displays -1 because 10 is greater than 6</pre>
-		<h2 id="lt"><</h2>
+		<h3 id="lt"><</h3>
 		<p>Pops the top two numbers off the stack, and pushes -1 on the stack if the first number is less, or 0 if not.  For example:</p>
 		<pre>7 5 < .     \ Displays 0 because 7 is not less than 5
 		7 10 < .    \ Displays -1 because 7 is less than 10</pre>
-		<h2 id="equals">=</h2>
+		<h3 id="equals">=</h3>
 		<p>Pops the top two numbers off the stack, and pushes -1 on the stack if they are the same, or 0 if not.  For example:</p>
 		<pre>7 7 = .           \ Displays -1 because 7 = 7
 7 123 = .         \ Displays 0 because 7 is not 123 (lol)</pre>
-
-
+		<h3 id="notEqual"><></h3>
+		<p>Pops the top two numbers off the stack, and pushes -1 on the stack if they are NOT the same, or 0 if they ARE.  For example:</p>
+		<pre>7 7 <> .           \ Displays 0 because 7 = 7
+7 123 <> .         \ Displays -1 because 7 is not 123 (lol)</pre>
+		<h3 id="gte">>=</h3>
+		<p>Pops the top two numbers off the stack, and pushes -1 on the stack if the first number is greater or they are equal, or 0 otherwise.  For example:</p>
+		<pre>10 12 >= .     \ Displays 0 because 10 is not greater than 12
+10 6 >= .      \ Displays -1 because 10 is greater than 6
+10 10 >= .     \ Displays -1 because 10 = 10</pre>
+		<h3 id="lt"><</h3>
+		<p>Pops the top two numbers off the stack, and pushes -1 on the stack if the first number is less or they are equal, or 0 otherwise.  For example:</p>
+		<pre>7 5 <= .     \ Displays 0 because 7 is not less than 5
+7 10 <= .    \ Displays -1 because 7 is less than 10
+7 7 <= .     \ Displays -1 because 7 = 7</pre>
+		<hr />
 		<h1 id="JSForthWords">JSForth-specific words</h1>
 		<h2 id="pow">^</h2>
 		<p>This calculates exponents.  For example:</p>

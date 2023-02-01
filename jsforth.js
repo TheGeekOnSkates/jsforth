@@ -58,7 +58,9 @@ var FORTH_TEXT = "\033[34mJSForth 0.2\033[0m\r\nType \033[1;33mhelp\033[0m to se
 	// MISC.
 	terminal,							// The terminal (lol obviously); now it's an xterm.js Terminal object
 	user_def = {},						// Dictionary of user-defined words (and also variables)
-	constants = {},						// Dictionary of user-defined constants
+	constants = {						// Dictionary of user-defined constants
+		true: -1, false: 0
+	},
 	main = [],							// Data stack
 	memory = new Int32Array(65536),		// Memory for strings, variables and constants
 	memoryPointer = 0,					// Used when assigning variables/constants
@@ -179,11 +181,14 @@ function interpret(input) {
 				memoryPointer++;
 				continue;
 			} else if (token == "rows") {
-                   main.push(terminal.rows);
-                   continue;
+				main.push(terminal.rows);
+				continue;
 			} else if (token == "cols") {
-                   main.push(terminal.cols);
-                   continue;
+				main.push(terminal.cols);
+				continue;
+			} else if (token == "random") {
+				main.push(parseInt(Math.random().toString().replace("0.","")));
+				continue;
 			}
 
 			// These words require ONE number to be on the stack.
@@ -577,4 +582,6 @@ window.onload = function() {
 	interpret(": 0= 0 = ;");
 	interpret(": 1+ 1 + ;");
 	interpret(": 1- 1 - ;");
+	interpret(": +! + ! ;");
+	interpret(": cells 8 * ;");
 };
