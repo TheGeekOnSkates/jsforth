@@ -157,7 +157,8 @@ function interpret(input) {
                    continue;
 			}
 
-			if ([".", "if", "invert", "drop", "dup", "abs"].indexOf(token) > -1) {
+			// These words require ONE number to be on the stack.
+			if ([".", "if", "invert", "drop", "dup", "abs", "count"].indexOf(token) > -1) {
 				if (main.length < 1 || IN_DEFINITION == true) {
 					FORTH_ERROR = STACK_UNDERFLOW;
 					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -197,13 +198,23 @@ function interpret(input) {
 						main.pop();
 					} else if (token == "abs") {
 						main.push(Math.abs(parseInt(main.pop())));
+					} else if (token == "count") {
+						var n = 0, z = main.pop();
+						main.push(z);
+						for (; z<memory.length; z++) {
+							if (memory[z] == 0) break;
+							n++;
+						}
+						main.push(n);
 					} else if (token == "dup") {
 						first = main.pop();
 						main.push(first);
 						main.push(first);
 					}
 				}
-			} else if (["+", "-", "*", "^", "/", "mod", "swap", "over", "pick", "roll", "=", "<>", ">=", "<=", ">", "<", "do", "rot", "-rot", "lshift", "rshift", "and", "or", "xor"].indexOf(token) > -1) {
+
+			// These words require that TWO  numbers be on the stack
+			} else if (["+", "-", "*", "^", "/", "mod", "!", "swap", "over", "pick", "roll", "=", "<>", ">=", "<=", ">", "<", "do", "rot", "-rot", "lshift", "rshift", "and", "or", "xor", "type", "prompt", "js"].indexOf(token) > -1) {
 				if (main.length < 2) {
 					FORTH_ERROR = STACK_UNDERFLOW;
 					FORTH_ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -273,6 +284,32 @@ function interpret(input) {
 						main.push(second);
 						main.push(first);
 						main.push(second);
+					} else if (token == "type") {
+						var length = main.pop(), start = main.pop(), str = "";
+						for(; start<length; start++) {
+							str += String.fromCharCode(memory[start]);
+						}
+						printBuffer.push(str);
+					} else if (token == "!") {
+						var addr = main.pop(), value = main.pop();
+						if (!addr < 0 || addr > memory.length) {
+							FORTH_ERROR = DIVISION_BY_ZERO;
+							FORTH_ERROR_MESSAGE = "<def:" + token + ";line:"+input+";pos:"+i+"> invalid memory address";
+							return;
+						}
+						else memory[addr] = value;
+					} else if (token == "prompt") {
+						var length = main.pop(), start = main.pop(), str = "";
+						for(; start<length; start++) {
+							str += String.fromCharCode(memory[start]);
+						}
+						FORTH_PROMPT = str;
+					} else if (token == "js") {
+						var length = main.pop(), start = main.pop(), str = "";
+						for(; start<length; start++) {
+							str += String.fromCharCode(memory[start]);
+						}
+						eval(str);
 					} else if (token == "pick") {
 						n = parseInt(main.pop());
 						if (n < main.length && n >= 1) {
