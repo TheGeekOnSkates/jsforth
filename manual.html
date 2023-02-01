@@ -42,10 +42,14 @@
 					<li><a href="#notEqual"><></a></li>
 					<li><a href="#gte">>=</a></li>
 					<li><a href="#lte"><=</a></li>
+					<li><a href="#dup">DUP</a></li>
+					<li><a href="#drop">DROP</a></li>
+					<li><a href="#pick">PICK and ROLL</a></li>
+					<li><a href="#rot">ROT and -ROT</a></li>
+					<li><a href="#swap">SWAP</a></li>
 				<!-- TO BE DOCUMENTED
-				0= 0< 1+ 1- lshift rshift and or xor . .s emit @ !
-				abs dup swap rot pick roll drop over invert
-				if ... then do ... loop : ;
+				0= 0< 1+ 1- lshift rshift and or xor . .s emit
+				abs over invert if ... then do ... loop : ;
 				
 				See https://forth-standard.org/standard/core
 				for words to be added :)
@@ -187,6 +191,32 @@ x @ .          \ @ gets the value of x, and . prints it, so you should see "42"<
 		<pre>7 5 <= .     \ Displays 0 because 7 is not less than 5
 7 10 <= .    \ Displays -1 because 7 is less than 10
 7 7 <= .     \ Displays -1 because 7 = 7</pre>
+		<h2 id="dup">DUP</h2>
+		<p>Duplicates the top number on the stack. For example:</p>
+		<pre>5 DUP        \ Displays: nothing; stack: 5 5</pre>
+		<h2 id="drop">DROP</h2>
+		<p>Removes ("pops") the top number from the stack. For example:</p>
+		<pre>1 2 3 DROP   \ Displays: nothing; stack: 1 2</pre>
+		<h3 id="pick">PICK and ROLL</h3>
+		<p>Pops a number off the stack, and uses that to copy a number onto the stack.  This is one of those words that's easier to demo than it is to explain, so here's an example:</p>
+		<pre>5 999 3 2 1 0 .s      \ Displays the stack, which is now 5 999 3 2 1 0
+4 pick                \ The 4 tells it, "I want the fourth from the top of the stack".  For this demo, I put a 999 there.
+                      \ Originally I had a 4 there, but I thought it would be clearer to use something that stands out more.
+.s                    \ Displays the stack, which is now 5 999 3 2 1 0 999 - it "picked" the 999 and copied it to the top.</pre>
+		<p><code>ROLL</code> works in exactly the same way, except that it also deletes the number.  So let's go back to our example:</p>
+		<pre>5 999 3 2 1 0 .s      \ Displays the stack, which is now 5 999 3 2 1 0
+4 roll                \ Again, the 4 tells it, "I want the fourth from the top of the stack".
+.s                    \ Now the stack is 5 3 2 1 0 999 - Notice the value between 5 and 3 is gone now.</pre>
+		<h3 id="rot">ROT and -ROT</h3>
+		<p>Rotates the top 3 numbers on the stack.  For example:</p>
+		<pre>1 2 3 rot         \ Displays: nothing; stack: 2 3 1 (it moved the 1 to the top)
+rot               \ Now the stack is 3 1 2 (it moved the 2 to the top)
+-rot              \ Stack is 2 3 1 again (undid the first "rot" above)
+-rot              \ Stack is 1 2 3 again
+-rot              \ Stack is 3 1 2 again (it moved the 3 to the bottom)</pre>
+		<h3 id="swap">SWAP</h3>
+		<p>Swaps the top 2 numbers on the stack. For example:</p>
+		<pre>8 11 SWAP    \ Displays: nothing; stack: 11 8 </pre>
 		<hr />
 		<h1 id="JSForthWords">JSForth-specific words</h1>
 		<h2 id="pow">^</h2>

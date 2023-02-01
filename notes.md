@@ -6,7 +6,7 @@ In no particular order...
 * Finish tweaking my input event handler; the Backspace bug is fixed, but I'd like to add some nicer features.
 * Once I do that, may as well add `KEY`
 * Keep adding more standard Forth words
-* Test all words, finish the manual, push to master and see where that PR goes :D
+* Test all words, finish the manual (btw figure out whether words should use an H2 or H3), push to master and see where that PR goes :D
 
 # Stuff that can wait for 0.3
 
