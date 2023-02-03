@@ -43,7 +43,9 @@ var PROMPT = "\r\n>>> ",            // Text to display to let the user know the 
 	terminal,                             // The terminal (lol obviously); now it's an xterm.js Terminal object
 	user_def = {},                        // Dictionary of user-defined words (and also variables)
 	constants = {                         // Dictionary of user-defined constants
-		true: -1, false: 0, base: 0       // Right now just true/false and BASE
+		true: -1, false: 0,               // These two are self-explanatory :D
+		base: 0,                          // Memory address of BASE
+		pad: 65536-1024                   // Let "pad" be 1K, at the very end of memory, to minimize overwriting by accident
 	},
 	main = [],                            // Data stack
 	memory = new Int32Array(65536),       // Memory for strings, variables and constants
@@ -464,7 +466,7 @@ function interpret(input) {
 			}
 
 		// These words require that THREE numbers be on the stack
-		} else if (["fill", "rot", "-rot"].indexOf(token) > -1) {
+		} else if (["fill", "rot", "-rot", "place", "+place", "move"].indexOf(token) > -1) {
 			if (main.length < 3) {
 				ERROR = STACK_UNDERFLOW;
 				ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -478,6 +480,16 @@ function interpret(input) {
 				} else if (token == "fill") {
 					var value = main.pop(), u = main.pop(), address = main.pop();
 					for (var i=0; i<u; i++) memory[address + i] = value;
+				} else if (token == "place") {
+					var address = main.pop(), stringLength = main.pop(), stringPointer = main.pop();
+					for (var i=0; i<stringLength; i++) memory[address + i] = memory[stringPointer + i];
+				} else if (token == "+place") {
+					var address = main.pop(), stringLength = main.pop(), stringPointer = main.pop();
+					while(memory[address] != 0 && address < memory.length) address++;
+					for (var i=0; i<stringLength; i++) memory[address + i] = memory[stringPointer + i];
+				} else if (token == "move") {
+					var count = main.pop(), to = main.pop(), from = main.pop();
+					for (var i=0; i<count; i++) memory[to + i] = memory[from + i];
 				}
 			}
 			

@@ -14,15 +14,11 @@ From here on down, it's all just low-level notes about the current project statu
 
 # To-do's for 0.2
 
-In no particular order...
-
-* Keep adding more standard Forth words - I know I can at least manage `C@` and `C!`; I'd kind of also like `pad`, `place`, and `+place` (though those are not part of "core" standards, they'd come in handy!)
-* Maybe try again on `KEY`; my previous idea kinda worked, but was buggy as puck.  Until there's a word to exit out of an if-statement (what was it, `LEAVE`?) the only way to read keyboard input was in a `DO` loop, which caused recursion-related problems, etc... Since JS demands to be event-driven and callback-heavy, maybe an `ONKEY` word would be better :D
-* If I feel like it, take another whack at the `."` bug
-* Test all words, finish the manual, push to master and see where that PR goes :D
+* Finish the docs and call it done for awhile! :)
 
 # Stuff that can wait for 0.3
 
+* `KEY` and `?KEY` if possible... like I said, maybe `ONKEY` is better... i.e. `ONKEY MYCALLBACK`
 * Known bug, no obvious solution, fight for another night: in `."` and `s"`, for reasons only God and the original dev would understand, if running inside a user-defined word, the last word get treated like a Forth word.  For example:
 
 ```
@@ -44,3 +40,27 @@ In no particular order...
 * Once I've got that, add `INCLUDE` (with support for URLs instead of just "files" in localStorage)
 * Canvas, audio, gamepad, speech... these will probably be scripts and not built into the language itself, but still... if possible, would be nice.
 * Any harder-to-add standard words, maybe some of the ones in "core extensions" (and also strings etc.).
+* `C@`, `C!` and `CMOVE`; these would require a major rework of how the program reads and writes memory.  For example, here's what it would take to get `c!` to work:
+
+```js
+var bits = memory[1].toString(2);				// The number as a string in binary format
+while (bits.length < 32) bits = "0" + bits;		// Make sure it has 32 characters
+var test = 255;									// This the 8-bit number to be stored
+test = test.toString(2);						// Convert that to a binary string
+var whichByte = 0;								// This is where we get into tricky territory.  if I do i.e. "myVar 1 + c!" it wouldn't work - it would go to the first byte of (myvar + 1 CELL)
+
+// With that sorted, the rest is pretty easy... but getting there would be a PITA.
+// memoryPointer would have to be dividied by... 4?... before it could do anything.
+// Yeah, that can wait for 0.3 :)
+
+console.log(bits);
+if (whichByte == 3)
+    bits = test + bits.substr(8);
+else if (whichByte == 2)
+    bits = bits.substr(0, 8) + test + bits.substr(0, 16);
+else if (whichByte == 1)
+    bits = bits.substr(0, 16) + test + bits.substr(0, 8);
+else bits = bits.substr(0, 24) + test;
+console.log(bits);
+memory[1] = parseInt(bits, 2);
+```
