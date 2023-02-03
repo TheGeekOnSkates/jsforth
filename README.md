@@ -16,8 +16,8 @@ From here on down, it's all just low-level notes about the current project statu
 
 In no particular order...
 
-* Play with adding `KEY`; maybe make interpret async, and then await a function that resolves when the user presses a key
-* Keep adding more standard Forth words
+* Keep adding more standard Forth words - I know I can at least manage `C@` and `C!`; I'd kind of also like `pad`, `place`, and `+place` (though those are not part of "core" standards, they'd come in handy!)
+* Maybe try again on `KEY`; my previous idea kinda worked, but was buggy as puck.  Until there's a word to exit out of an if-statement (what was it, `LEAVE`?) the only way to read keyboard input was in a `DO` loop, which caused recursion-related problems, etc... Since JS demands to be event-driven and callback-heavy, maybe an `ONKEY` word would be better :D
 * If I feel like it, take another whack at the `."` bug
 * Test all words, finish the manual, push to master and see where that PR goes :D
 
@@ -32,7 +32,14 @@ In no particular order...
 \ https://www.youtube.com/watch?v=vINkWUe874c
 ```
 
-* Multi-line definitions
+* Multi-line definitions; i.e.
+```
+: myWord
+	." Oh my word :D"
+	cr
+	." Oh wait, this wouldn't compile anyway till that bug is fixed"
+;
+```
 * I"d also kinda like a nice editor for files in localStorage; probably not gonna build one in the terminal; I'm thinking a fancy one with something like CodeMirror :)
 * Once I've got that, add `INCLUDE` (with support for URLs instead of just "files" in localStorage)
 * Canvas, audio, gamepad, speech... these will probably be scripts and not built into the language itself, but still... if possible, would be nice.

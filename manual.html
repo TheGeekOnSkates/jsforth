@@ -34,6 +34,7 @@
 					<li><a href="#comment">\</a></li>
 					<li><a href="#dot">.</a></li>
 					<li><a href="#dotS">.S</a></li>
+					<li><a href="#emit">EMIT</a></li>
 					<li><a href="#plus">+</a></li>
 					<li><a href="#minus">-</a></li>
 					<li><a href="#times">*</a></li>
@@ -55,7 +56,9 @@
 					<li><a href="#swap">SWAP</a></li>
 					
 				<!-- TO BE DOCUMENTED
-				0= 0< 1+ 1- emit abs invert if ... then do ... loop : ;
+				cr space spaces 2dup 2! 2@ /mod 2drop 2swap 2over */ */mod
+				+! 0= 0< 0> 1+ 1- emit abs invert if ... then do ... loop : ;
+				cells cell+ bl ?dup
 				
 				See https://forth-standard.org/standard/core
 				for words to be added :)
@@ -194,17 +197,24 @@ x @ .          \ @ gets the value of x, and . prints it, so you should see "42"<
 		<h2 id="dotS">.S</h2>
 		<p>Displays how many elements are on the stack, and also every number in the stack.  For instance:</p>
 		<pre>20 999 4 .s  \ Displays: "&lt;3> 20 999 4" (3 numbers on the stack, followed by those 3 numbers)</20></pre>
+		17; stack: empty</pre>
+		
+		<h2 id="emit">EMIT</h2>
+		<p>Displays the character representation of the top number on the stack</p>
+		<pre>70 emit      \ Displays: F; Stack: no change</pre>
+		<p></p>
 		
 		<h2 id="plus">+</h2>
 		<p>Pops the top two numbers off the stack, adds them, and pushes the result onto the stack.  For example:</p>
 		<pre>3 4 +     \ Displays: Nothing; Stack: 7</pre>
-		<h3 id="minus">-</h3>
+		
+		<h2 id="minus">-</h2>
 		<p>Pops the top two numbers off the stack, subtracts the second from the first, and pushes the result onto the stack.  For example:</p>
 		<pre>10 2 -    \ Displays: Nothing; Stack: 8</pre>
-		<h3 id="times">*</h3>
+		<h2 id="times">*</h2>
 		<p>Pops the top two numbers off the stack, multiplies them, and pushes the result onto the stack.  For example:</p>
 		<pre>5 8 *     \ Displays: Nothing; Stack: 40</pre>
-		<h3 id="slash">/</h3>
+		<h2 id="slash">/</h2>
 		<p>Pops the top two numbers off the stack, divides the second by the first, and pushes the result onto the stack.  A few important notes here:</p>
 		<ul>
 			<li>This is whole-number ("integer") division; there are no decimal places in the result.</li>

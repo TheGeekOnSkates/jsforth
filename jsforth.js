@@ -26,7 +26,7 @@ var PROMPT = "\r\n>>> ",            // Text to display to let the user know the 
 	DEFAULT_ALLOCATION = 2000,      // Default max recursions (I think this is to prevent crashing the browser due to infinite loops)
 	ALLOCATION = 2000,              // Max recursions for interpret() - this can be reset with the word ALLOCATE
 	DEBUG = false,                  // Turns a debug mode on or off; in debug mode, JSForth prints info on what it's doing to the JS console
-	IN_DEFINITION = false,                // Ignore potential Stack underflow errors if an operator is within a definition.
+	IN_DEFINITION = false,          // Ignore potential Stack underflow errors if an operator is within a definition.
 	OK = " ok",                     // The "ok" message to show when everything works
 	ERROR = "",                     // An error code set if something goes wrong - not sure if we need it, but it looks like we do, so I'm leaving it for now
 	// Error codes
@@ -43,11 +43,11 @@ var PROMPT = "\r\n>>> ",            // Text to display to let the user know the 
 	terminal,                             // The terminal (lol obviously); now it's an xterm.js Terminal object
 	user_def = {},                        // Dictionary of user-defined words (and also variables)
 	constants = {                         // Dictionary of user-defined constants
-		true: -1, false: 0                // Right now just true/false
+		true: -1, false: 0, base: 0       // Right now just true/false and BASE
 	},
 	main = [],                            // Data stack
 	memory = new Int32Array(65536),       // Memory for strings, variables and constants
-	memoryPointer = 0,                    // Used when assigning variables/constants
+	memoryPointer = 1,                    // Used when assigning variables/constants (starts at 1 because 0 is BASE)
 	RECUR_COUNT = 0,					  // I think this tells interpret() how many recursions deep we are (see ALLOCATION)
 	printBuffer = [],                     // Stores terminal output
 	line = [],                            // Stores terminal input
@@ -104,17 +104,6 @@ function interpret(input) {
 			continue;
 		}
 		
-		// If it's a number, put that on the stack
-		if (!isNaN(parseInt(token)) && isFinite(token)) {
-			if (token.indexOf(".") > -1) {
-				var n = parseInt(token.replace(".", ""));
-				 main.push(n);
-				 main.push(n > 0 ? 0 : -1);
-			}
-			else main.push(parseInt(token));
-			continue;
-		}
-		
 		// And from here on out it's all about the words.
 		if (token == ".\"") {
 			var printThis = [];
@@ -159,6 +148,11 @@ function interpret(input) {
 			memoryPointer++;	// For the "NULL terminator"
 			continue;
 		}
+		if (token == "align" || token == "aligned") {
+			// These words were added for portability; I can't imagine them being super-relevant in JSForth, so for now I'm
+			// quoting the standard: "Implementors may define these words as no-ops on systems for which they aren't functional."
+			continue;
+		}
 		if (token == "cls") {
 			terminal.write("\033[2J\033[H");
 			continue;
@@ -182,7 +176,8 @@ function interpret(input) {
 			continue;
 		}
 		if (token == ".s") {
-			printBuffer.push("<" + main.length + "> " + main.join(" "));
+			printBuffer.push("<" + main.length.toString(memory[0]) + "> ");
+			for (var i=0; i<main.length; i++) printBuffer.push(main[i].toString(memory[0]).toUpperCase() + " ");
 			continue;
 		}
 		if (token == "emit") {
@@ -214,8 +209,8 @@ function interpret(input) {
 			continue;
 		}
 
-		// These words require ONE number to be on the stack.
 		if ([".", "if", "invert", "drop", "dup", "abs", "count", "@", "constant", "allot"].indexOf(token) > -1) {
+			// These words require ONE number to be on the stack.
 			if (main.length < 1 || IN_DEFINITION == true) {
 				ERROR = STACK_UNDERFLOW;
 				ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -291,7 +286,7 @@ function interpret(input) {
 			}
 
 		// These words require that TWO numbers be on the stack
-		} else if (["+", "-", "*", "^", "/", "mod", "!", "swap", "over", "pick", "roll", "=", "<>", ">=", "<=", ">", "<", "do", "rot", "-rot", "lshift", "rshift", "and", "or", "xor", "type", "prompt", "js"].indexOf(token) > -1) {
+		} else if (["+", "-", "*", "^", "/", "mod", "!", "swap", "over", "pick", "roll", "=", "<>", ">=", "<=", ">", "<", "do", "lshift", "rshift", "and", "or", "xor", "type", "prompt", "js"].indexOf(token) > -1) {
 			if (main.length < 2) {
 				ERROR = STACK_UNDERFLOW;
 				ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
@@ -465,15 +460,28 @@ function interpret(input) {
 						interpret(newWord.join(" "));
 					if (rest.length)
 						interpret(rest.join(" "));
-				} else if (token == "rot") {
+				}
+			}
+
+		// These words require that THREE numbers be on the stack
+		} else if (["fill", "rot", "-rot"].indexOf(token) > -1) {
+			if (main.length < 3) {
+				ERROR = STACK_UNDERFLOW;
+				ERROR_MESSAGE = "Too few arguments: \""+token+"\".";
+			} else if (!IN_DEFINITION) {
+				if (token == "rot") {
 					var a = main.pop(), b = main.pop(), c = main.pop();
 					main.push(b); main.push(a); main.push(c);
 				} else if (token == "-rot") {
 					var a = main.pop(), b = main.pop(), c = main.pop();
 					main.push(a); main.push(c); main.push(b);
+				} else if (token == "fill") {
+					var value = main.pop(), u = main.pop(), address = main.pop();
+					for (var i=0; i<u; i++) memory[address + i] = value;
 				}
 			}
-		// These functions have no requirements or are not found.
+			
+		// These functions have no requirements; the check for unknown words goes here too
 		} else {
 			if (token == ":") {
 				i++;
@@ -513,6 +521,31 @@ function interpret(input) {
 			} else if (token == "clear") {
 				main = [];
 			} else {
+				
+				// If it's a number, put that on the stack
+				// Haha, cheesy bug: "DECIMAL" starts with "DEC" so in base-16 that's not NaN...
+				// Maybe move this check to the very last "else" lol
+				if (DEBUG) console.log("Checking token is a number, using base " + memory[0] + ": ", parseInt(token, memory[0]));
+				if (!isNaN(parseInt(token, memory[0])) && isFinite(parseInt(token, memory[0]))) {
+					if (token.indexOf(".") > -1) {
+						if (memory[0] != 10) {
+							// In Gforth this throws an error; i.e. can't do ABC.DEF
+							// Which makes sense, cuz it is called a DECIMAL point :D
+							ERROR = EXPECTED_VAR_NAME;		// I'm beginning to see these names are not super-important
+							ERROR_MESSAGE = "Undefined word: " + token;
+							return;
+						}
+						// Else, remove the decimal point and push the number on the stack
+						// Again, I'm just going by Gforth here (i.e. 3.14 ." gives me 314).
+						var n = parseInt(token.replace(".", ""));
+						main.push(n);
+						main.push(n > 0 ? 0 : -1);
+					}
+					else main.push(parseInt(token, memory[0]));
+					continue;
+				}
+				
+				
 				// Tried this as a quick-and-dirty-hack, hoping it would fix the stoooooopid ." bug.
 				// of course, it didn't help.  Didn't do Jack.  Like I said, only God knows the answer.
 				// Shoot, at this point I'm starting to think even the original programmer might not know! :D
@@ -521,7 +554,7 @@ function interpret(input) {
 				ERROR = CMD_NOT_FOUND;
 				if (token == "")
 					token = "null";
-				ERROR_MESSAGE = "<def:" + token + ";line:"+input+";pos:"+i+"> not found";
+				ERROR_MESSAGE = "<def:" + token + ";line:"+input+";pos:"+i+"> unknown word";
 			}
 		}
 	}
@@ -664,16 +697,30 @@ window.onload = function() {
 	// Add some more standard Forth words - written in Forth :)
 	interpret(": cr 10 emit 13 emit ;");
 	interpret(": space 32 emit ;");
+	interpret(": spaces 0 do space loop ;");
 	interpret(": 2dup over over ;");
 	interpret(": /mod 2dup mod -rot / ;");
 	interpret(": 2drop drop drop ;");
 	interpret(": 2swap 3 roll 3 roll ;");
 	interpret(": 2over 3 pick 3 pick ;");
+	interpret(": 2! swap over ! cell+ ! ;");
+	interpret(": 2@ dup cell+ @ swap @ ;");
 	interpret(": */ -rot * swap / ;");
+	interpret(": */mod -rot * swap /mod ;");
 	interpret(": 0< 0 < ;");
+	interpret(": 0> 0 > ;");
 	interpret(": 0= 0 = ;");
 	interpret(": 1+ 1 + ;");
 	interpret(": 1- 1 - ;");
 	interpret(": +! + ! ;");
-	interpret(": cells 8 * ;");
+	interpret(": cells 1 * ;");
+	interpret(": cell+ 1+ ;");
+	interpret(": bl 32 ;");
+	interpret(": ?dup dup 0 <> if dup then ;");
+	interpret(": decimal 10 base ! ;");
+	interpret("10 base !");
+	
+	// Whoops!  no ELSE yet :P
+	//interpret(": min 2dup > if dup else over then ;");
+	//interpret(": max 2dup < if dup else over then ;");
 };
