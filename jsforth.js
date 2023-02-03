@@ -456,17 +456,17 @@ function interpret(input) {
 					main.push((first!=second)?parseInt(-1):0);
 				} else if (token == "do") {
 					var rest = Array();
-					var func_def = Array();
+					var newWord = Array();
 					var index = main.pop();
 					var iterations = main.pop();
 					IN_DEFINITION = true;
 					for (i++; i<tokens.length && tokens[i].toLowerCase() != "loop"; i++)
-						func_def.push(tokens[i]);
+						newWord.push(tokens[i]);
 					for (i++;i < tokens.length;i++) // gather up remaining tokens
 						rest.push(tokens[i]);
 					IN_DEFINITION = false;
 					for (;index < iterations; index++)
-						interpret(func_def.join(" "));
+						interpret(newWord.join(" "));
 					if (rest.length)
 						interpret(rest.join(" "));
 				} else if (token == "rot") {
@@ -481,66 +481,47 @@ function interpret(input) {
 		} else {
 			if (token == ":") {
 				i++;
-				var existed = false, rest = [], func_def = [], func = tokens[i].toLowerCase();					
+				var existed = false, rest = [], newWord = [], func = tokens[i].toLowerCase();					
 				IN_DEFINITION = true;
-				for (i++; i<tokens.length && tokens[i] != ";"; i++) {
-					/*
-					// Attempt to fix the ." bug - no dice
-					if (tokens[i] == '."') {
-						while(!tokens[i].endsWith('"')) i++;
-						i++;
-						continue;
-					}
-					*/
-					func_def.push(tokens[i]);
-				}
-				for (i++;i < tokens.length;i++) {	// gather up remaining tokens
-					/*
-					// Attempt to fix the ." bug - no dice
-					if (tokens[i] == '."') {
-						while(!tokens[i].endsWith('"')) i++;
-						i++;
-						continue;
-					}
-					*/
-					rest.push(tokens[i]);
-				}
+				
+				// Put all the tokens inside the definition into "newWord"
+				for (i++; i<tokens.length && tokens[i] != ";"; i++) newWord.push(tokens[i]);
+				
+				// gather up remaining tokens
+				for (i++;i < tokens.length;i++) rest.push(tokens[i]);
+				
 				IN_DEFINITION = false;
 				if (func in user_def) existed = true;
-				user_def[func] = func_def.join(" ").trim();
-				if (rest.length) {
-					// alert("BINGO!");		// Nope, not a bingo :D
-					interpret(rest.join(" "));
-				}
+				user_def[func] = newWord.join(" ").trim();
+				if (rest.length) interpret(rest.join(" "));
 				return existed ? "redefined " + func : "";
 			} else if ((token in user_def) && !IN_DEFINITION) {	// !IN_DEFINITION allows recursion 
-				var def = user_def[token];
-				var rest = Array();
-				for (i++;i < tokens.length;i++) {	// gather up remaining tokens
-					/*
-					// Attempt to fix the ." bug - no dice
-					if (tokens[i] == '."') {
-						while(!tokens[i].endsWith('"')) i++;
-						i++;
-						continue;
-					}
-					*/
-					rest.push(tokens[i]);
-				}
+				var def = user_def[token], rest = [];
+				
+				// gather up remaining tokens
+				for (i++;i < tokens.length;i++) rest.push(tokens[i]);
+				
 				if (DEBUG) {
 					console.log("recursive_def: "+user_def[token]);
 					console.log(main.join(" "));
 				}
-				interpret(def);
-				if (rest.length) {
-					// alert("BINGO!");		// Nope, not a bingo :D
-					interpret(rest.join(" "));// interpret any remaining tokens
-				}
+				
+				
+				//if (!def.startsWith('." ')) {
+					
+					// THIS is the line that's triggering the ." bug.
+					// The question is, why?  How?  Whatever it is...
+					// the if-statement above prevents it... but then
+					// it doesn't do ." either
+					interpret(def);
+					
+				if (rest.length) interpret(rest.join(" "));// interpret any remaining tokens
 			} else if (token == "clear") {
 				main = [];
 			} else {
 				// Tried this as a quick-and-dirty-hack, hoping it would fix the stoooooopid ." bug.
-				// of course, it didn't do Jack.  Like I said, only God knows the answer.  The original programmer might not even know! :D
+				// of course, it didn't help.  Didn't do Jack.  Like I said, only God knows the answer.
+				// Shoot, at this point I'm starting to think even the original programmer might not know! :D
 				// https://www.youtube.com/watch?v=vINkWUe874c - "but the front-end's a pile of crap" :D
 				// if (token.endsWith('"')) continue;
 				ERROR = CMD_NOT_FOUND;
