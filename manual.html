@@ -24,6 +24,7 @@
 					<li><a href="#noobz">For beginners</a></li>
 					<li><a href="#pros">For experienced programmers</a></li>
 					<li><a href="#roadmap">Roadmap to version 1.0</a></li>
+					<li><a href="#terminal">Using the terminal</a></li>
 				</ol>
 			</li><li>
 				<a href="#words">Supported standard Forth words</a>
@@ -31,11 +32,15 @@
 					<li><a href="#store">@ and !</a></li>
 					<li><a href="#leftParen">(</a></li>
 					<li><a href="#comment">\</a></li>
+					<li><a href="#dot">.</a></li>
+					<li><a href="#dotS">.S</a></li>
 					<li><a href="#plus">+</a></li>
 					<li><a href="#minus">-</a></li>
 					<li><a href="#times">*</a></li>
 					<li><a href="#slash">/</a></li>
 					<li><a href="#mod">MOD</a></li>
+					<li><a href="#lshift">LSHIFT and RSHIFT</a></li>
+					<li><a href="#andOrXor">AND, OR and XOR</a></li>
 					<li><a href="#gt">></a></li>
 					<li><a href="#lt"><</a></li>
 					<li><a href="#equals">=</a></li>
@@ -44,12 +49,13 @@
 					<li><a href="#lte"><=</a></li>
 					<li><a href="#dup">DUP</a></li>
 					<li><a href="#drop">DROP</a></li>
+					<li><a href="#over">OVER</a></li>
 					<li><a href="#pick">PICK and ROLL</a></li>
 					<li><a href="#rot">ROT and -ROT</a></li>
 					<li><a href="#swap">SWAP</a></li>
+					
 				<!-- TO BE DOCUMENTED
-				0= 0< 1+ 1- lshift rshift and or xor . .s emit
-				abs over invert if ... then do ... loop : ;
+				0= 0< 1+ 1- emit abs invert if ... then do ... loop : ;
 				
 				See https://forth-standard.org/standard/core
 				for words to be added :)
@@ -121,26 +127,75 @@ dup docBody append dup s" Heading text here" innerText
 
 \ Or, working with localStorage, web APIs, JSON etc... Maybe not the best idea,
 \ but should be easily doable cuz Forth rocks and a JS Forth should be able to do that.</pre>
+			I'd like to add an <code>EDIT</code> word for working with files (in localStorage or sending to a server),
+			I'd like to add a few missing words that are harder to make work, like <code>ELSE</code>, the sky's the limit.
+			If Forth is an operating system, then JSForth is an OS that runs anywhere - how awesome is that!
+		</p>
+		<h2 id="terminal">Using the terminal</h2>
+		<p>
+			The terminal is a bit on the old-school side.  Everything is done using the keyboard, and the keyboard navigation is...
+			well, not what you'd expect in most graphical programs.  Here is the full list of supported keys and what they do:
+			<table border="1" cellpadding="4" cellspacing="0">
+				<thead><tr>
+					<th>Key</th>
+					<th>Action</th>
+				</tr></thead><tbody>
+					<tr>
+						<td>Letters, numbers, or punctuation</td>
+						<td>
+							Of course, these keys type the character on the screen, as usual.  The big difference though, is that
+							if you move back (using the left arrow or Home keys) you'll be typing over what you typed before.  It's
+							kind of like what happens if you press the Insert key in a regular text editor.
+						</td>
+					</tr><tr>
+						<td>Home</td>
+						<td>Moves to the start of the line</td>
+					</tr><tr>
+						<td>End</td>
+						<td>Moves to the end of the line</td>
+					</tr><tr>
+						<td>Left/right arrows</td>
+						<td>Move the cursor to the left or right</td>
+					</tr><tr>
+						<td>Enter</td>
+						<td>Sends the line you just typed to JSForth.  JSForth will then run it and let you know if it worked (by printing either "OK" or an error message)</td>
+					</tr><tr>
+						<td>Up/down arrows</td>
+						<td>Replaces the current line with a command you wrote previously.  When you press Enter, JSForth saves the line you just typed to a history; that history will be available until you exit JSForth.</td>
+					</tr>
+			</tbody></table>
 		</p>
 		<hr />
+		
 		<h1 id="words">Supported standard Forth words</h1>
 		<p>Note that in this manual, I'm using uppercase just out of convention.  The Forth standard does it, all the tutorials I've seen do it, so it made sense to do that here too.  But don't worry - none of these words are case-sensitive (so dup, DUP and Dup all do the same thing).</p>
-		<h3 id="store">@ and !</h3>
+		<h2 id="store">@ and !</h2>
 		<p>Gets/sets a number in memory.  This pops the top 2 numbers off the stack; the first (topmost) is treated as a memory address, and the next is the value to put there.  Here's an example:</p>
 		<pre>variable x     \ Creates a variable; now when we use "x" on the next line, its memory address will be pushed on the stack
 42 x !         \ Now x = 42
 x @ .          \ @ gets the value of x, and . prints it, so you should see "42"</pre>
-		<h3 id="leftParen">(</h3>
+		
+		<h2 id="leftParen">(</h2>
 		<p>Starts a comment.  For example:</p>
 		<pre>: doop ( more phonetically correct) dup ;</pre>
 		<p>In this goofy and kind of pointless example, created a new word "doop" that just runs "dup".  But I explained why in a comment.  Note that, like in nearly all Forths, there has to be a space after the "(" character for this to work.  Doing this has no effect on the stack, so it's a nice way to add comments in your code.</p>
 		<p>In fact, the Forth community has kind of adopted this type of comment as a way to tell us what a word does to the stack.  If I wanted to do that with my dopey doop example, my code might look something like this:</p>
 		<pre>: doop ( number -- number numberAgain ) dup ;</pre>
 		<p>There's also a form of shorthand that's probably in the standard by now, like using "n" instead of "number", but that is beyond the scope of this manual.</p>
-		<h3 id="comment">\</h3>
+		
+		<h2 id="comment">\</h2>
 		<p>This is another way to write a comment.  The difference here is that you don't have to "close it".  This is like "//" or "#" in other languages.  For example:</p>
 		<pre>: one year 60 24 * 365 * ;    \ 60 minutes * 24 hours * 365 days</pre>
-		<h3 id="plus">+</h3>
+
+		<h2 id="dot">.</h2>
+		<p>Removes ("pops") the top number off the stack and displays it.  For example:</p>
+		<pre>17 .         \ Displays: 17; stack: empty</pre>
+		
+		<h2 id="dotS">.S</h2>
+		<p>Displays how many elements are on the stack, and also every number in the stack.  For instance:</p>
+		<pre>20 999 4 .s  \ Displays: "&lt;3> 20 999 4" (3 numbers on the stack, followed by those 3 numbers)</20></pre>
+		
+		<h2 id="plus">+</h2>
 		<p>Pops the top two numbers off the stack, adds them, and pushes the result onto the stack.  For example:</p>
 		<pre>3 4 +     \ Displays: Nothing; Stack: 7</pre>
 		<h3 id="minus">-</h3>
@@ -165,6 +220,21 @@ x @ .          \ @ gets the value of x, and . prints it, so you should see "42"<
 		</ul>
 		<p>For example:</p>
 		<pre>10 3 MOD     \ Displays: Nothing; Stack: 1</pre>
+		
+		<h3 id="lshift">LSHIFT and RSHIFT</h3>
+		<p>Pops the top two numbers off the stack, and uses the first to bit-shift the second.  This is the kind of thing that most programmers will rarely use, but IMO all programmers should at least be familiar with.  There are all kinds of tutorials on bitwise math out there, so I won't dive too deep into it here.  But for now, here are a few examples:</p>
+		<pre>: left8 8 0 do 1 lshift dup . cr loop ;
+: right8 8 0 do 1 rshift dup . cr loop ;
+256 right8 left8</pre>
+		<p>In this example, I took the number 256, shifted it left 8 times, and at each point printed the new value.  Then I called rshift 8 times and printed that.</p>
+
+<h3 id="andOrXor">AND, OR, and XOR</h3>
+		<p>Pops the top two numbers off the stack, and uses the first to do bitwise math on the second.  Again, explaining how bitwise math works is beyond the scope of this manual (it's not just a thing used in this specific version of Forth; but <a href="i" target="_blank">here's one that applies to all Forths</a>).  So here are some examples:</p>
+		<pre>5 3 and .     \ Prints 1
+5 3 or .     \ Prints 7
+5 3 xor .     \ Prints 6</pre>
+		<p>In this example, I took the number 256, shifted it left 8 times, and at each point printed the new value.  Then I called rshift 8 times and printed that.</p>
+		
 		<h3 id="gt">></h3>
 		<p>Pops the top two numbers off the stack, and pushes -1 on the stack if the first number is greater, or 0 if not.  For example:</p>
 		<pre>10 12 > .     \ Displays 0 because 10 is not greater than 12
@@ -194,9 +264,15 @@ x @ .          \ @ gets the value of x, and . prints it, so you should see "42"<
 		<h2 id="dup">DUP</h2>
 		<p>Duplicates the top number on the stack. For example:</p>
 		<pre>5 DUP        \ Displays: nothing; stack: 5 5</pre>
+		
 		<h2 id="drop">DROP</h2>
 		<p>Removes ("pops") the top number from the stack. For example:</p>
 		<pre>1 2 3 DROP   \ Displays: nothing; stack: 1 2</pre>
+		
+		<h2 id="over">OVER</h2>
+		<p>Copies the second number on the stack to the top.  For example:</p>
+		<pre>1 2 3 over   \ Displays: nothing; stack: 1 2 3 2</pre>
+		
 		<h3 id="pick">PICK and ROLL</h3>
 		<p>Pops a number off the stack, and uses that to copy a number onto the stack.  This is one of those words that's easier to demo than it is to explain, so here's an example:</p>
 		<pre>5 999 3 2 1 0 .s      \ Displays the stack, which is now 5 999 3 2 1 0

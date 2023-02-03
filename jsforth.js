@@ -50,7 +50,10 @@ var PROMPT = "\r\n>>> ",            // Text to display to let the user know the 
 	memoryPointer = 0,                    // Used when assigning variables/constants
 	RECUR_COUNT = 0,					  // I think this tells interpret() how many recursions deep we are (see ALLOCATION)
 	printBuffer = [],                     // Stores terminal output
-	line = "";                            // Stores terminal input
+	line = [],                            // Stores terminal input
+	linePointer = 0,                      // Used for keys like HOme/End/arrows
+	cmdHistory = [],                      // Command history, like most modern terminals (and even a lot of retro ones) have
+	historyPointer = 0;                   // For the up/down arrow keys
 
 /**
  * This is where most of the heavy lifting is done.  It actually interprets the user's code.
@@ -128,14 +131,9 @@ function interpret(input) {
 			var s = printThis.join(" ");
 			if (DEBUG) console.log("Final string: " + s);
 			printBuffer.push(s);
-			//i += 500;	// Doesn't seem to matter how much I increase i.
-			// For whatever reason, the last piece of the string gets treated like a word.
-			// Since no string" (even a number like 7") is a word, it shows an error.
-			//alert("What gives here???!!!??!?! :P");
 			continue;
 		}
 		if (token == "s\"") {
-			/*
 			var saveThis = [];
 			i++;
 			token = tokens[i];
@@ -159,8 +157,6 @@ function interpret(input) {
 				memoryPointer++;
 			}
 			memoryPointer++;	// For the "NULL terminator"
-			*/
-			terminal.write("Let's get .\" working first :D\r\n");
 			continue;
 		}
 		if (token == "cls") {
@@ -506,14 +502,12 @@ function interpret(input) {
 					console.log(main.join(" "));
 				}
 				
-				
-				//if (!def.startsWith('." ')) {
-					
-					// THIS is the line that's triggering the ." bug.
-					// The question is, why?  How?  Whatever it is...
-					// the if-statement above prevents it... but then
-					// it doesn't do ." either
-					interpret(def);
+				// Here we encounter an exasperating bug that's harder to track down than a single molecule hiding somehwere on Mars. :D
+				// I've spent way too much time fishing for this elusive Unobtainium of a bug, but since I didn't design the engine that
+				// powers custom word definitions... it might be a really long time before I can discover its origin and solution.  So for now.
+				if (def.startsWith('." ') || def.startsWith('s" ')) {
+					terminal.write("\r\nDEEP MAGIC FROM THE DAWN OF TIME.......\r\n\nBy the Lion's mane, we'll figure it out someday.\r\n\n");
+				} else interpret(def);
 					
 				if (rest.length) interpret(rest.join(" "));// interpret any remaining tokens
 			} else if (token == "clear") {
@@ -548,18 +542,83 @@ function displayPrompt(m) {
  * @param {string} char The data (might not just be one character)
  */
 function onInput(char) {
-	if (char[0] == "\033") {
-		// For now, just don't do anything.
-		// Eventually, I'd like to add suport for:
-		//		* Arrow keys
-		//		* Home/End
-		//		* Delete
+	
+	// Up arrow key
+	if (char == "\033[A") {
+		if (!cmdHistory.length) return;
+		historyPointer--;
+		if (historyPointer < 0) historyPointer = cmdHistory.length - 1;
+		for (var i=0; i<linePointer; i++) terminal.write("\033[D \033[D");
+		line = cmdHistory[historyPointer].split("");
+		linePointer = line.length;
+		terminal.write(line.join(""));
 		return;
 	}
+	
+	// Down arrow key
+	if (char == "\033[B") {
+		if (!cmdHistory.length) return;
+		historyPointer++;
+		if (historyPointer >= cmdHistory.length) historyPointer = 0;
+		for (var i=0; i<linePointer; i++) terminal.write("\033[D \033[D");
+		line = cmdHistory[historyPointer].split("");
+		linePointer = line.length;
+		terminal.write(line.join(""));
+		return;
+	}
+	
+	// Right arrow key
+	if (char == "\033[C") {
+		if (linePointer < line.length) {
+			terminal.write(char);
+			linePointer++;
+		}
+		return;
+	}
+	
+	// Left arrow key
+	if (char == "\033[D") {
+		if (linePointer > 0) {
+			terminal.write(char);
+			linePointer--;
+		}
+		return;
+	}
+	
+	// End key
+	if (char == "\033[F") {
+		terminal.write("\033[" + (line.length - linePointer) + "C");
+		linePointer = line.length;
+		return;
+	}
+	
+	// Home key
+	if (char == "\033[H") {
+		terminal.write("\033[" + linePointer + "D");
+		linePointer = 0;
+		return;
+	}
+	
+	// Delete key
+	if (char == "\033[3~") {
+		line.splice(linePointer, 1);
+		if (linePointer > 0) terminal.write("\033[" + (linePointer) + "D");
+		terminal.write(line.join("") + " \033[" + (line.length + 1 - linePointer) + "D");
+		console.log(line);
+		return;
+	}
+	
+	// Other non-printable keys (Escape, F1-F12, etc.) do nothing
+	if (char[0] == "\033") return;
+	
+	// Enter
 	var code = char.charCodeAt(0);
 	if (char == "\r") {
 		RECUR_COUNT = 0;
-		var result = interpret(line);
+		var l = line.join("");
+		if (cmdHistory.indexOf(l) == -1) cmdHistory.push(l);
+		historyPointer = cmdHistory.length;
+		var result = interpret(l);
 		if (printBuffer.length) printBuffer.push(" ");
 		if (ERROR == "") {
 			if (result) result += " ";
@@ -569,17 +628,22 @@ function onInput(char) {
 			else displayPrompt(" " + printBuffer.join("") + result + OK);
 		}
 		else displayPrompt("\033[1;31m " + (ERROR_MESSAGE || "Error: unknown") + "\033[0m\r\n");
-		line = "";
+		line = [];
+		linePointer = 0;
 		printBuffer = [];
 		ERROR = "";
-	} else if (code == 8 || code == 127) {
-		if (line !== "") {
-			line = line.substr(0, line.length - 1);
+	} else if (code == 127) {
+		// Backspace
+		if (linePointer > 0) {
+			linePointer--;
+			line[linePointer] = "";
 			terminal.write("\033[D \033[D");
 		}
 	} else {
+		// All other printable characters
 		terminal.write(char);
-		line += char;
+		line[linePointer] = char;
+		linePointer++;
 	}
 }
 
