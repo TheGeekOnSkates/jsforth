@@ -128,10 +128,10 @@ function interpret(input) {
 			var s = printThis.join(" ");
 			if (DEBUG) console.log("Final string: " + s);
 			printBuffer.push(s);
-			i += 500;	// Doesn't seem to matter how much I increase i.
+			//i += 500;	// Doesn't seem to matter how much I increase i.
 			// For whatever reason, the last piece of the string gets treated like a word.
 			// Since no string" (even a number like 7") is a word, it shows an error.
-			alert("What gives here???!!!??!?! :P");
+			//alert("What gives here???!!!??!?! :P");
 			continue;
 		}
 		if (token == "s\"") {
@@ -479,8 +479,7 @@ function interpret(input) {
 			}
 		// These functions have no requirements or are not found.
 		} else {
-			if (token == ":")
-			{
+			if (token == ":") {
 				i++;
 				var existed = false;
 				var rest = Array();
@@ -489,28 +488,42 @@ function interpret(input) {
 				IN_DEFINITION = true;
 				for (i++;i<tokens.length && tokens[i] != ";"; i++)
 					func_def.push(tokens[i]);
-				for (i++;i < tokens.length;i++) // gather up remaining tokens
+				for (i++;i < tokens.length;i++) {	// gather up remaining tokens
+					/*
+					// Attempt to fix the ." bug - no dice
+					if (tokens[i] == '."') {
+						while(!tokens[i].endsWith('"')) i++;
+						i++;
+						continue;
+					}
+					*/
 					rest.push(tokens[i]);
+				}
 				IN_DEFINITION = false;
-				if (func in window.user_def)
+				if (func in user_def)
 					existed = true;
-				window.user_def[func] = func_def.join(" ").trim();
+				user_def[func] = func_def.join(" ").trim();
 				if (rest.length)
 					interpret(rest.join(" "));
 				if (existed)
 					return "<def:" + func + "> redefined";
 				return "<def:" + func + "> created";
-			}
-			else if ((token in window.user_def) && !IN_DEFINITION) // !IN_DEFINITION allows recursion
-			{
-				var def = window.user_def[token];
+			} else if ((token in user_def) && !IN_DEFINITION) {	// !IN_DEFINITION allows recursion 
+				var def = user_def[token];
 				var rest = Array();
-				for (i++;i < tokens.length;i++) // gather up remaining tokens
-				{
+				for (i++;i < tokens.length;i++) {	// gather up remaining tokens
+					/*
+					// Attempt to fix the ." bug - no dice
+					if (tokens[i] == '."') {
+						while(!tokens[i].endsWith('"')) i++;
+						i++;
+						continue;
+					}
+					*/
 					rest.push(tokens[i]);
 				}
 				if (DEBUG) {
-					console.log("recursive_def: "+window.user_def[token]);
+					console.log("recursive_def: "+user_def[token]);
 					console.log(main.join(" "));
 				}
 				interpret(def);
