@@ -481,13 +481,19 @@ function interpret(input) {
 		} else {
 			if (token == ":") {
 				i++;
-				var existed = false;
-				var rest = Array();
-				var func = tokens[i].toLowerCase();					
-				var func_def = Array();
+				var existed = false, rest = [], func_def = [], func = tokens[i].toLowerCase();					
 				IN_DEFINITION = true;
-				for (i++;i<tokens.length && tokens[i] != ";"; i++)
+				for (i++; i<tokens.length && tokens[i] != ";"; i++) {
+					/*
+					// Attempt to fix the ." bug - no dice
+					if (tokens[i] == '."') {
+						while(!tokens[i].endsWith('"')) i++;
+						i++;
+						continue;
+					}
+					*/
 					func_def.push(tokens[i]);
+				}
 				for (i++;i < tokens.length;i++) {	// gather up remaining tokens
 					/*
 					// Attempt to fix the ." bug - no dice
@@ -500,14 +506,13 @@ function interpret(input) {
 					rest.push(tokens[i]);
 				}
 				IN_DEFINITION = false;
-				if (func in user_def)
-					existed = true;
+				if (func in user_def) existed = true;
 				user_def[func] = func_def.join(" ").trim();
-				if (rest.length)
+				if (rest.length) {
+					// alert("BINGO!");		// Nope, not a bingo :D
 					interpret(rest.join(" "));
-				if (existed)
-					return "<def:" + func + "> redefined";
-				return "<def:" + func + "> created";
+				}
+				return existed ? "redefined " + func : "";
 			} else if ((token in user_def) && !IN_DEFINITION) {	// !IN_DEFINITION allows recursion 
 				var def = user_def[token];
 				var rest = Array();
@@ -527,11 +532,17 @@ function interpret(input) {
 					console.log(main.join(" "));
 				}
 				interpret(def);
-				if (rest.length)
+				if (rest.length) {
+					// alert("BINGO!");		// Nope, not a bingo :D
 					interpret(rest.join(" "));// interpret any remaining tokens
+				}
 			} else if (token == "clear") {
 				main = [];
 			} else {
+				// Tried this as a quick-and-dirty-hack, hoping it would fix the stoooooopid ." bug.
+				// of course, it didn't do Jack.  Like I said, only God knows the answer.  The original programmer might not even know! :D
+				// https://www.youtube.com/watch?v=vINkWUe874c - "but the front-end's a pile of crap" :D
+				// if (token.endsWith('"')) continue;
 				ERROR = CMD_NOT_FOUND;
 				if (token == "")
 					token = "null";
