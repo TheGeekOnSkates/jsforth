@@ -3,7 +3,15 @@
 This is a Forth implementation in Javascript, with a REPL using [xterm.js](https://xtermjs.org/).
 It started out as a student's college assignment; it only took a few hours to throw together, so
 it's still very much a "work in progress". That said, it is pretty darn cool!  See manual.html
-for the list of supported words, known bugs, and other fun stuff.
+for the list of supported words, known bugs, and other fun stuff.  You can [try it here](https://geekonskates.com/apps/jsforth/).
+
+## Change log
+
+* Version 0.2: Added variables, constants, a memory map, and over 3 dozen new words
+* Version 0.1: Initial release; it had if/then, do/loop, : and ; and about a dozen other words.
+
+
+
 
 
 
@@ -12,12 +20,10 @@ for the list of supported words, known bugs, and other fun stuff.
 
 From here on down, it's all just low-level notes about the current project status; unless you're a programmer interested in contributing (and please, by all means do) there probably isn't much here of interest.
 
-# To-do's for 0.2
+# Ideas / wish list for 0.3
 
-* Finish the docs and call it done for awhile! :)
-
-# Stuff that can wait for 0.3
-
+* `ELSE`; that will enable a bunch of other words
+* `BEGIN` and `AGAIN`
 * `KEY` and `?KEY` if possible... like I said, maybe `ONKEY` is better... i.e. `ONKEY MYCALLBACK`
 * Known bug, no obvious solution, fight for another night: in `."` and `s"`, for reasons only God and the original dev would understand, if running inside a user-defined word, the last word get treated like a Forth word.  For example:
 
